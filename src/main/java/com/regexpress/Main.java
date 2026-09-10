@@ -6,6 +6,8 @@ import com.regexpress.ast.CharNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.StarNode;
 import com.regexpress.ast.Node;
+import com.regexpress.parser.Parser;
+import com.regexpress.parser.RegexSyntaxException;
 
 /**
  * Scratch runner for regexpress, a regular expression engine.
@@ -23,9 +25,18 @@ public final class Main {
 //        System.out.println("  3. matcher : NFA + input -> boolean");
 
 //        Node ast = new ConcatNode(new CharNode('a'), new StarNode(new CharNode('b')));
-        Node ast = new ConcatNode(new StarNode(new AlternateNode(new CharNode('a'), new CharNode('b'))), new CharNode('c'));
+//        Node ast = new ConcatNode(new StarNode(new AlternateNode(new CharNode('a'), new CharNode('b'))), new CharNode('c'));
 //        System.out.println(AstPrinter.flat(ast));
-        AstPrinter.printTree(ast);
+//        AstPrinter.printTree(ast);
+
+        String pattern = "ab|c)d";
+
+        try {
+            Node node = Parser.parse(pattern);
+            AstPrinter.printFlat(node);
+        } catch (RegexSyntaxException e) {
+            System.out.println(e.describe());
+        }
     }
 
 
