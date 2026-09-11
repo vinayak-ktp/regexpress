@@ -6,4 +6,9 @@ public record StarNode(Node child) implements Node {
 	public StarNode {
 		Objects.requireNonNull(child, "child must not be null");
 	}
+
+	@Override
+	public String toString() {
+		return "Star(" + child.toString() + ")";
+	}
 }

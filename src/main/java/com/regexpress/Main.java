@@ -29,7 +29,8 @@ public final class Main {
 //        System.out.println(AstPrinter.flat(ast));
 //        AstPrinter.printTree(ast);
 
-        String pattern = "ab|c)d";
+//        String pattern = "ab|c)d";
+        String pattern = "a|*b";
 
         try {
             Node node = Parser.parse(pattern);
@@ -38,6 +39,4 @@ public final class Main {
             System.out.println(e.describe());
         }
     }
-
-
 }
