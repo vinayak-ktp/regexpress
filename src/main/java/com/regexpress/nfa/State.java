@@ -16,4 +16,20 @@ public final class State {
 
 	// final state of the machine
 	boolean accepting;
+
+	public char label() {
+		return label;
+	}
+
+	public State next() {
+		return next;
+	}
+
+	public List<State> epsilon() {
+		return epsilon;
+	}
+
+	public boolean accepting() {
+		return accepting;
+	}
 }

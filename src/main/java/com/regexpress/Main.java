@@ -21,11 +21,6 @@ import com.regexpress.parser.RegexSyntaxException;
 public final class Main {
 
     public static void main(String[] args) {
-//        System.out.println("regexpress skeleton is alive.");
-//        System.out.println("Pipeline stages still to build:");
-//        System.out.println("  1. parser  : regex text  -> AST");
-//        System.out.println("  2. nfa     : AST         -> NFA");
-//        System.out.println("  3. matcher : NFA + input -> boolean");
 
 //        Node ast = new ConcatNode(new CharNode('a'), new StarNode(new CharNode('b')));
 //        Node ast = new ConcatNode(new StarNode(new AlternateNode(new CharNode('a'), new CharNode('b'))), new CharNode('c'));
@@ -33,7 +28,7 @@ public final class Main {
 //        AstPrinter.printTree(ast);
 
 //        String pattern = "ab|c)d";
-        String pattern = "a|b(cd|e)*";
+        String pattern = "a|bcd|e*";
 
         try {
             Node node = Parser.parse(pattern);
