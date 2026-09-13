@@ -3,7 +3,7 @@ package com.regexpress.nfa;
 import java.util.ArrayList;
 import java.util.List;
 
-final class State {
+public final class State {
 
 	int id;
 

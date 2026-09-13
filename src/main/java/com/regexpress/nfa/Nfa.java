@@ -3,7 +3,7 @@ package com.regexpress.nfa;
 import java.util.List;
 
 public final class Nfa {
-	State start;
+	public final State start;
 	List<State> allStates;
 
 	Nfa(State start, List<State> allStates) {

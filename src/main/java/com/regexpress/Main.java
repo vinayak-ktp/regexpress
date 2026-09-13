@@ -6,6 +6,9 @@ import com.regexpress.ast.CharNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.StarNode;
 import com.regexpress.ast.Node;
+import com.regexpress.nfa.Nfa;
+import com.regexpress.nfa.NfaBuilder;
+import com.regexpress.nfa.NfaPrinter;
 import com.regexpress.parser.Parser;
 import com.regexpress.parser.RegexSyntaxException;
 
@@ -30,11 +33,13 @@ public final class Main {
 //        AstPrinter.printTree(ast);
 
 //        String pattern = "ab|c)d";
-        String pattern = "a|*b";
+        String pattern = "a|b(cd|e)*";
 
         try {
             Node node = Parser.parse(pattern);
             AstPrinter.printFlat(node);
+            Nfa machine = NfaBuilder.build(node);
+            NfaPrinter.print(machine);
         } catch (RegexSyntaxException e) {
             System.out.println(e.describe());
         }
