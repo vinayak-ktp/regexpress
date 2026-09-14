@@ -26,7 +26,7 @@ public final class Main {
 
 //        String pattern = "ab|c)d";
         String pattern = "a|b(cd|e)*";
-        String input = "acdcdee";
+        String input = "bcdcdee";
 
         try {
             Node node = Parser.parse(pattern);
