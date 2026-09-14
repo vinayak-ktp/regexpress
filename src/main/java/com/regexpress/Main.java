@@ -1,11 +1,8 @@
 package com.regexpress;
 
-import com.regexpress.ast.AlternateNode;
 import com.regexpress.ast.AstPrinter;
-import com.regexpress.ast.CharNode;
-import com.regexpress.ast.ConcatNode;
-import com.regexpress.ast.StarNode;
 import com.regexpress.ast.Node;
+import com.regexpress.matcher.NfaMatcher;
 import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
 import com.regexpress.nfa.NfaPrinter;
@@ -28,13 +25,21 @@ public final class Main {
 //        AstPrinter.printTree(ast);
 
 //        String pattern = "ab|c)d";
-        String pattern = "a|bcd|e*";
+        String pattern = "a|b(cd|e)*";
+        String input = "acdcdee";
 
         try {
             Node node = Parser.parse(pattern);
+            System.out.println("AST for " + pattern + ": ");
             AstPrinter.printFlat(node);
+
             Nfa machine = NfaBuilder.build(node);
+            System.out.println("\nNFA for " + pattern + ": ");
             NfaPrinter.print(machine);
+
+            boolean matches = NfaMatcher.matches(machine, input);
+            String verdict = matches ? " matches " : " does not match ";
+            System.out.println("\ninput \"" + input + "\"" + verdict + "the pattern \"" + pattern + "\"");
         } catch (RegexSyntaxException e) {
             System.out.println(e.describe());
         }
