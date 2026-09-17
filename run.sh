@@ -8,13 +8,19 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 
+# Read Java version from .java-version file
+if [ -f .java-version ]; then
+    JAVA_VERSION=$(cat .java-version)
+    JAVA_HOME=$(/usr/libexec/java_home -v "$JAVA_VERSION")
+fi
+
 # Clear out/production first, so a renamed or deleted class never leaves
 # stale bytecode behind that no longer matches the current source.
 rm -rf out/production
 mkdir -p out/production
 
 find src/main/java src/test/java -name '*.java' > out.sources
-javac -d out/production @out.sources
+"${JAVA_HOME}/bin/javac" -d out/production @out.sources
 rm out.sources
 
 # ${1:-Main} means: use the first argument if one was given, otherwise
@@ -31,4 +37,4 @@ else
     className="com.regexpress.$target"
 fi
 
-java -cp out/production "$className"
+"${JAVA_HOME}/bin/java" -cp out/production "$className"

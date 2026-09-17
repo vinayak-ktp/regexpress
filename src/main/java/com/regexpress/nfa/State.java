@@ -3,12 +3,14 @@ package com.regexpress.nfa;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.regexpress.ast.CharSet;
+
 public final class State {
 
 	int id;
 
 	// labelled arrow
-	char label;
+	CharSet set;
 	State next;
 
 	// free arrows
@@ -17,8 +19,8 @@ public final class State {
 	// final state of the machine
 	boolean accepting;
 
-	public char label() {
-		return label;
+	public CharSet set() {
+		return set;
 	}
 
 	public State next() {

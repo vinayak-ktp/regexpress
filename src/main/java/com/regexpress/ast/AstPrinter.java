@@ -4,16 +4,9 @@ public final class AstPrinter {
 
 	private AstPrinter() { }
 
+	// no flat-printing logic as it's already handled by the toString() methods
 	public static String flat(Node node) {
-		return switch (node) {
-			case CharNode(char value) -> String.valueOf(value);
-			case ConcatNode(Node left, Node right) -> "Concat(" + flat(left) + ", " + flat(right) + ")";
-			case AlternateNode(Node left, Node right) -> "Alternate(" + flat(left) + ", " + flat(right) + ")";
-			case StarNode(Node child) -> "Star(" + flat(child) + ")";
-			case PlusNode(Node child) -> "Plus(" + flat(child) + ")";
-			case OptionalNode(Node child) -> "Optional(" + flat(child) + ")";
-			case EmptyNode() -> "Empty";
-		};
+		return node.toString();
 	}
 
 	public static String tree(Node node) {
@@ -22,7 +15,7 @@ public final class AstPrinter {
 
 	static String tree(Node node, int depth) {
 		return switch (node) {
-			case CharNode(char value) -> "\t".repeat(depth) + String.valueOf(value);
+			case CharSetNode c -> "\t".repeat(depth) + c.toString();
 			case ConcatNode(Node left, Node right) -> "\t".repeat(depth) + "Concat\n" + tree(left, depth+1) + "\n" + tree(right, depth+1);
 			case AlternateNode(Node left, Node right) -> "\t".repeat(depth) + "Alternate\n" + tree(left, depth+1) + "\n" + tree(right, depth+1);
 			case StarNode(Node child) -> "\t".repeat(depth) + "Star\n" + tree(child, depth+1);

@@ -7,23 +7,23 @@ import static com.regexpress.TestSupport.report;
 public class AstTest {
 	public static void main(String[] args) {
 		// "a(b|c)*"
-		Node treeA = new ConcatNode(new CharNode('a'), new StarNode(new AlternateNode(new CharNode('b'), new CharNode('c'))));
+		Node treeA = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new AlternateNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c')))));
 		// "a(b|c)*
-		Node treeB = new ConcatNode(new CharNode('a'), new StarNode(new AlternateNode(new CharNode('b'), new CharNode('c'))));
+		Node treeB = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new AlternateNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c')))));
 		// "a(b*|c)"
-		Node treeC = new ConcatNode(new CharNode('a'), new AlternateNode(new StarNode(new CharNode('b')), new CharNode('c')));
+		Node treeC = new ConcatNode(new CharSetNode(CharSet.of('a')), new AlternateNode(new StarNode(new CharSetNode(CharSet.of('b'))), new CharSetNode(CharSet.of('c'))));
 
 		Node emptyNodeA = new EmptyNode();
 		Node emptyNodeB = new EmptyNode();
 
-		CharNode charNode = new CharNode('a');
+		CharSetNode charNode = new CharSetNode(CharSet.of('a'));
 
 		// check tree equality
 		check("two independently built trees for the same pattern compare as equal", treeA, treeB);
 		check("two trees with different structure do not compare as equal", treeA, treeC, false);
 
 		check("two independently created EmptyNode instances compare as equal", emptyNodeA, emptyNodeB);
-		check("CharNode.value() returns the character it was constructed with", 'a', charNode.value());
+		check("CharSetNode.set() returns the CharSet it was constructed with", CharSet.of('a'), charNode.set());
 
 		// check passing null
 		checkThrows("AlternateNode rejects a null left child", NullPointerException.class, () -> new AlternateNode(null, new EmptyNode()));

@@ -1,3 +1,3 @@
 package com.regexpress.ast;
 
-public sealed interface Node permits CharNode, ConcatNode, AlternateNode, StarNode, EmptyNode, PlusNode, OptionalNode { }
+public sealed interface Node permits CharSetNode, ConcatNode, AlternateNode, StarNode, EmptyNode, PlusNode, OptionalNode { }

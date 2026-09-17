@@ -5,7 +5,8 @@ import static com.regexpress.TestSupport.checkThrows;
 import static com.regexpress.TestSupport.report;
 
 import com.regexpress.ast.AlternateNode;
-import com.regexpress.ast.CharNode;
+import com.regexpress.ast.CharSet;
+import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.Node;
@@ -14,11 +15,11 @@ import com.regexpress.ast.StarNode;
 public class ParserTest {
 	public static void main(String[] args) {
 		// "ab*"
-		Node expectedStarGripsOneChar = new ConcatNode(new CharNode('a'), new StarNode(new CharNode('b')));
+		Node expectedStarGripsOneChar = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new CharSetNode(CharSet.of('b'))));
 		// "(ab)*"
-		Node expectedStarGripsGroup = new StarNode(new ConcatNode(new CharNode('a'), new CharNode('b')));
+		Node expectedStarGripsGroup = new StarNode(new ConcatNode(new CharSetNode(CharSet.of('a')), new CharSetNode(CharSet.of('b'))));
 		// "a|(bc)*"
-		Node expectedMixedPrecedence = new AlternateNode(new CharNode('a'), new StarNode(new ConcatNode(new CharNode('b'), new CharNode('c'))));
+		Node expectedMixedPrecedence = new AlternateNode(new CharSetNode(CharSet.of('a')), new StarNode(new ConcatNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c')))));
 
 		// check precedence
 		check("star grips only the character before it", expectedStarGripsOneChar, Parser.parse("ab*"));
@@ -36,13 +37,13 @@ public class ParserTest {
 		// check degenerate patterns
 		check("an empty pattern parses to an empty node", new EmptyNode(), Parser.parse(""));
 		check("an empty group parses to an empty node", new EmptyNode(), Parser.parse("()"));
-		check("an alternation with an empty right branch parses correctly", new AlternateNode(new CharNode('a'), new EmptyNode()), Parser.parse("a|"));
+		check("an alternation with an empty right branch parses correctly", new AlternateNode(new CharSetNode(CharSet.of('a')), new EmptyNode()), Parser.parse("a|"));
 		check("an alternation with both branches empty parses correctly", new AlternateNode(new EmptyNode(), new EmptyNode()), Parser.parse("|"));
 
 		// "a**"
-		Node stackedStars = new StarNode(new StarNode(new CharNode('a')));
+		Node stackedStars = new StarNode(new StarNode(new CharSetNode(CharSet.of('a'))));
 		// "(a*)*"
-		Node nestedClosure = new StarNode(new StarNode(new CharNode('a')));
+		Node nestedClosure = new StarNode(new StarNode(new CharSetNode(CharSet.of('a'))));
 
 		// check deliberate decisions
 		check("stacked stars are accepted", stackedStars, Parser.parse("a**"));

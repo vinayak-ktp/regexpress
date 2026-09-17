@@ -11,7 +11,7 @@ public final class NfaPrinter {
 			String line = "State " + String.format("%3d", s.id);
 
 			if (s.next != null) {
-				line += "  ——" + s.label + "——>  " + s.next.id;
+				line += "  ——" + s.set.toString() + "——>  " + s.next.id;
 			} else if (!s.epsilon.isEmpty()) {
 				line += "  ——ε——>  " + s.epsilon.stream().map(e -> String.valueOf(e.id)).collect(Collectors.joining(", "));
 			}

@@ -19,7 +19,7 @@ public final class NfaMatcher {
 			Set<State> next = new HashSet<>();
 
 			for (State s : current) {
-				if (s.next() != null && s.label() == c) {
+				if (s.next() != null && s.set().contains(c)) {
 					next.add(s.next());
 				}
 			}

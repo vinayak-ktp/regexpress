@@ -19,13 +19,15 @@ public final class Main {
 //        AstPrinter.printTree(ast);
 
 //        String pattern = "ab|c)d";
-        String pattern = "a|b?(cd+|e)*";
-        String input = "cdddcdee";
+//        String pattern = "a|b?(cd+|e)*.";
+        String pattern = "a[x-zt-vf-]c.";
+        String input = "a-cd";
 
         try {
             Node node = Parser.parse(pattern);
             System.out.println("AST for " + pattern + ": ");
             AstPrinter.printFlat(node);
+//            AstPrinter.printTree(node);
 
             Nfa machine = NfaBuilder.build(node);
             System.out.println("\nNFA for " + pattern + ": ");

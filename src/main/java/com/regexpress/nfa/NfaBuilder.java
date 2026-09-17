@@ -4,7 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import com.regexpress.ast.AlternateNode;
-import com.regexpress.ast.CharNode;
+import com.regexpress.ast.CharSet;
+import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.Node;
@@ -34,7 +35,7 @@ public final class NfaBuilder {
 
 	private Fragment buildFragment(Node node) {
 		return switch (node) {
-			case CharNode(char value) -> buildChar(value);
+			case CharSetNode(CharSet set) -> buildCharSet(set);
 			case ConcatNode(Node left, Node right) -> buildConcat(buildFragment(left), buildFragment(right));
 			case AlternateNode(Node left, Node right) -> buildAlternate(buildFragment(left), buildFragment(right));
 			case StarNode(Node child) -> buildStar(buildFragment(child));
@@ -44,10 +45,10 @@ public final class NfaBuilder {
 		};
 	}
 
-	private Fragment buildChar(char value) {
+	private Fragment buildCharSet(CharSet set) {
 		State in = newState();
 		State out = newState();
-		in.label = value;
+		in.set = set;
 		in.next = out;
 		return new Fragment(in, out);
 	}

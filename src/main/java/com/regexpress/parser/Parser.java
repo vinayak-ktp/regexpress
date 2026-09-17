@@ -1,7 +1,8 @@
 package com.regexpress.parser;
 
 import com.regexpress.ast.AlternateNode;
-import com.regexpress.ast.CharNode;
+import com.regexpress.ast.CharSet;
+import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.Node;
@@ -112,10 +113,41 @@ public final class Parser {
 			return inner;
 		}
 
+		if (tryConsume('[')) {
+			Node charClass = buildCharSetNode();
+			expect(']');
+			return charClass;
+		}
+
 		char c = consume();
-		if(c == '*' || c == '+' || c == '?' || c == '|' || c == ')') {
+		if (c == '*' || c == '+' || c == '?' || c == '|' || c == ')' || c == ']') {
 			throw error("unexpected '" + c + "'");
 		}
-		return new CharNode(c);
+		if (c == '.') return new CharSetNode(CharSet.all());
+		return new CharSetNode(CharSet.of(c));
+	}
+
+	private Node buildCharSetNode() {
+		CharSet set = CharSet.empty();
+		if (tryConsume('^')) set.negate();
+
+		while (hasMoreCharClassItems()) {
+			char a = consume();
+			boolean isRangeChar = tryConsume('-');
+
+			if (isRangeChar && hasMoreCharClassItems()) {
+				char b = consume();
+				if (a > b) throw error("range " + a + " to " + b + " is invalid");
+				set.union(CharSet.range(a, b));
+			} else {
+				set.union(CharSet.of(a));
+				if (isRangeChar) set.union(CharSet.of('-'));
+			}
+		}
+		return new CharSetNode(set);
+	}
+
+	private boolean hasMoreCharClassItems() {
+		return hasMore() && peek() != ']';
 	}
 }
