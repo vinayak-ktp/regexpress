@@ -9,12 +9,6 @@ import com.regexpress.nfa.NfaPrinter;
 import com.regexpress.parser.Parser;
 import com.regexpress.parser.RegexSyntaxException;
 
-/**
- * Scratch runner for regexpress, a regular expression engine.
- *
- * This is a throwaway harness: as we build each stage of the pipeline
- * (parse -> compile -> match) we wire it up here to see it work end to end.
- */
 public final class Main {
 
     public static void main(String[] args) {
@@ -25,8 +19,8 @@ public final class Main {
 //        AstPrinter.printTree(ast);
 
 //        String pattern = "ab|c)d";
-        String pattern = "a|b(cd|e)*";
-        String input = "bcdcdee";
+        String pattern = "a|b?(cd+|e)*";
+        String input = "cdddcdee";
 
         try {
             Node node = Parser.parse(pattern);

@@ -8,6 +8,8 @@ import com.regexpress.ast.CharNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.Node;
+import com.regexpress.ast.OptionalNode;
+import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
 
 public final class NfaBuilder {
@@ -36,6 +38,8 @@ public final class NfaBuilder {
 			case ConcatNode(Node left, Node right) -> buildConcat(buildFragment(left), buildFragment(right));
 			case AlternateNode(Node left, Node right) -> buildAlternate(buildFragment(left), buildFragment(right));
 			case StarNode(Node child) -> buildStar(buildFragment(child));
+			case PlusNode(Node child) -> buildPlus(buildFragment(child));
+			case OptionalNode(Node child) -> buildOptional(buildFragment(child));
 			case EmptyNode() -> buildEmpty();
 		};
 	}
@@ -81,7 +85,29 @@ public final class NfaBuilder {
 		child.exit.epsilon.add(out);
 
 		in.epsilon.add(out);
-		out.epsilon.add(in);
+		child.exit.epsilon.add(in);
+
+		return new Fragment(in, out);
+	}
+
+	private Fragment buildPlus(Fragment child) {
+		State in = newState();
+		State out = newState();
+
+		in.epsilon.add(child.entrance);
+		child.exit.epsilon.add(out);
+		out.epsilon.add(child.entrance);
+
+		return new Fragment(in, out);
+	}
+
+	private Fragment buildOptional(Fragment child) {
+		State in = newState();
+		State out = newState();
+
+		in.epsilon.add(child.entrance);
+		child.exit.epsilon.add(out);
+		in.epsilon.add(out);
 
 		return new Fragment(in, out);
 	}

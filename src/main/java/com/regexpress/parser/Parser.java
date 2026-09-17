@@ -5,6 +5,8 @@ import com.regexpress.ast.CharNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.Node;
+import com.regexpress.ast.OptionalNode;
+import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
 
 public final class Parser {
@@ -90,8 +92,11 @@ public final class Parser {
 	private Node parseRepetition() {
 		Node node = parseAtom();
 
-		while (tryConsume('*')) {
-			node = new StarNode(node);
+		while (hasMore()) {
+			if (tryConsume('*')) node = new StarNode(node);
+			else if (tryConsume('+')) node = new PlusNode(node);
+			else if (tryConsume('?')) node = new OptionalNode(node);
+			else break;
 		}
 		return node;
 	}
@@ -108,7 +113,7 @@ public final class Parser {
 		}
 
 		char c = consume();
-		if(c == '*' || c == '|' || c == ')') {
+		if(c == '*' || c == '+' || c == '?' || c == '|' || c == ')') {
 			throw error("unexpected '" + c + "'");
 		}
 		return new CharNode(c);
