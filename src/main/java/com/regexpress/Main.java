@@ -20,8 +20,9 @@ public final class Main {
 
 //        String pattern = "ab|c)d";
 //        String pattern = "a|b?(cd+|e)*.";
-        String pattern = "a[x-zt-vf-]c.";
-        String input = "a-cd";
+//        String pattern = "a[x-zt-vf-]c.";
+        String pattern = "a{2,}";
+        String input = "aa";
 
         try {
             Node node = Parser.parse(pattern);

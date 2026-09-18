@@ -97,9 +97,72 @@ public final class Parser {
 			if (tryConsume('*')) node = new StarNode(node);
 			else if (tryConsume('+')) node = new PlusNode(node);
 			else if (tryConsume('?')) node = new OptionalNode(node);
+			else if (tryConsume('{')) node = parseBounds(node);
 			else break;
 		}
 		return node;
+	}
+
+	private Node parseBounds(Node node) {
+		int min = parseNumber();
+		int max = min;
+		boolean unbounded = false;
+
+		if (tryConsume(',')) {
+			if (hasMore() && peek() != '}') {
+				max = parseNumber();
+			} else {
+				unbounded = true;
+			}
+		}
+
+		if (!unbounded && max < min) {
+			throw error("range " + min + " to " + max + " is invalid");
+		}
+
+		expect('}');
+
+		Node required = repeat(node, min);
+
+		if (unbounded) {
+			if (min == 0) return new StarNode(node);
+			if (min == 1) return new PlusNode(node);
+			return new ConcatNode(required, new StarNode(node));
+		}
+
+		if (max == min) return required;
+		if (min == 0 && max == 1) return new OptionalNode(node);
+
+		return new ConcatNode(required, atMost(node, max - min));
+	}
+
+	private static Node repeat(Node node, int count) {
+		if (count == 0) return new EmptyNode();
+		Node result = node;
+		for (int i = 1; i < count; i++) {
+			result = new ConcatNode(result, node);
+		}
+		return result;
+	}
+
+	private static Node atMost(Node node, int count) {
+		Node result = new OptionalNode(node);
+		for (int i = 1; i < count; i++) {
+			result = new OptionalNode(new ConcatNode(node, result));
+		}
+		return result;
+	}
+
+	private int parseNumber() {
+		int start = position;
+		int number = 0;
+		while (hasMore() && peek() != ',' && peek() != '}') {
+			char c = consume();
+			if (!(c >= '0' && c <= '9')) throw error("expected a digit");
+			number = number * 10 + (c - '0');
+		}
+		if (position == start) throw error("expected a digit");
+		return number;
 	}
 
 	private Node parseAtom() {
