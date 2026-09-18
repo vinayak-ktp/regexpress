@@ -10,6 +10,8 @@ import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.Node;
+import com.regexpress.ast.OptionalNode;
+import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
 
 public class ParserTest {
@@ -49,14 +51,52 @@ public class ParserTest {
 		check("stacked stars are accepted", stackedStars, Parser.parse("a**"));
 		check("a star wrapped around a star is accepted without hanging", nestedClosure, Parser.parse("(a*)*"));
 
+		Node charA = new CharSetNode(CharSet.of('a'));
+		Node charB = new CharSetNode(CharSet.of('b'));
+
+		// "a{3}" and "a{3,3}"
+		Node exactCopies = new ConcatNode(new ConcatNode(charA, charA), charA);
+		// "a{2,4}"
+		Node boundedRange = new ConcatNode(new ConcatNode(charA, charA), new OptionalNode(new ConcatNode(charA, new OptionalNode(charA))));
+		// "a{2,}"
+		Node atLeastTwo = new ConcatNode(new ConcatNode(charA, charA), new StarNode(charA));
+		// "(ab){2}"
+		Node groupCopies = new ConcatNode(new ConcatNode(charA, charB), new ConcatNode(charA, charB));
+		// "a{2}{2}"
+		Node stackedBounds = new ConcatNode(new ConcatNode(charA, charA), new ConcatNode(charA, charA));
+
+		// check bounded repetitions
+		check("an exact bound expands to that many copies", exactCopies, Parser.parse("a{3}"));
+		check("matching bounds expand to that many copies", exactCopies, Parser.parse("a{3,3}"));
+		check("a bounded range expands to required copies followed by optional ones", boundedRange, Parser.parse("a{2,4}"));
+		check("an open upper bound expands to required copies followed by a star", atLeastTwo, Parser.parse("a{2,}"));
+		check("a bound after a group repeats the group", groupCopies, Parser.parse("(ab){2}"));
+		check("stacked bounds are accepted", stackedBounds, Parser.parse("a{2}{2}"));
+
+		// check normalized bounds
+		check("an open bound with a zero minimum is a star", new StarNode(charA), Parser.parse("a{0,}"));
+		check("an open bound with a one minimum is a plus", new PlusNode(charA), Parser.parse("a{1,}"));
+		check("a zero-to-one bound is an optional", new OptionalNode(charA), Parser.parse("a{0,1}"));
+		check("a zero bound parses to an empty node", new EmptyNode(), Parser.parse("a{0}"));
+
 		String strayStar = "a|*b";
 		String unopenedParen = "ab)c";
 		String unclosedParen = "a(bc";
+		String invertedRange = "a{2,1}";
+		String missingMinimum = "a{,3}";
+		String emptyBound = "a{}";
+		String unterminatedBound = "a{2,";
+		String emptyMaximum = "a{2,,}";
 
 		// check rejections
 		checkThrows("rejects a '*' with nothing to repeat", RegexSyntaxException.class, () -> Parser.parse(strayStar));
 		checkThrows("rejects an unmatched closing parenthesis", RegexSyntaxException.class, () -> Parser.parse(unopenedParen));
 		checkThrows("rejects an unclosed opening parenthesis", RegexSyntaxException.class, () -> Parser.parse(unclosedParen));
+		checkThrows("rejects a maximum smaller than the minimum", RegexSyntaxException.class, () -> Parser.parse(invertedRange));
+		checkThrows("rejects a missing minimum in a bound", RegexSyntaxException.class, () -> Parser.parse(missingMinimum));
+		checkThrows("rejects an empty bound", RegexSyntaxException.class, () -> Parser.parse(emptyBound));
+		checkThrows("rejects an unterminated bound", RegexSyntaxException.class, () -> Parser.parse(unterminatedBound));
+		checkThrows("rejects an empty maximum in a bound", RegexSyntaxException.class, () -> Parser.parse(emptyMaximum));
 
 		report();
 	}

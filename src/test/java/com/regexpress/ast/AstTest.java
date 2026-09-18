@@ -31,6 +31,8 @@ public class AstTest {
 		checkThrows("ConcatNode rejects a null left child", NullPointerException.class, () -> new ConcatNode(null, new EmptyNode()));
 		checkThrows("ConcatNode rejects a null right child", NullPointerException.class, () -> new ConcatNode(new EmptyNode(), null));
 		checkThrows("StarNode rejects a null child", NullPointerException.class, () -> new StarNode(null));
+		checkThrows("PlusNode rejects a null child", NullPointerException.class, () -> new PlusNode(null));
+		checkThrows("OptionalNode rejects a null child", NullPointerException.class, () -> new OptionalNode(null));
 
 		report();
 	}

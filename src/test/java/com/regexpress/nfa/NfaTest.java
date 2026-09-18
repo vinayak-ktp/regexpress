@@ -14,18 +14,27 @@ import com.regexpress.parser.Parser;
 
 public class NfaTest {
 	public static void main(String[] args) {
-		String pattern = "a|bcd|e*";
+		String[] patterns = { "a|bcd|e*", "a+b?", "[a-c][^x]", "a{2,4}", "(ab){2}", "a**" };
+
+		for (String pattern : patterns) {
+			checkInvariants(pattern);
+		}
+
+		report();
+	}
+
+	private static void checkInvariants(String pattern) {
 		Node ast = Parser.parse(pattern);
 		Nfa machine = NfaBuilder.build(ast);
 		List<State> states = machine.allStates;
 
-		check("a machine has at most 2 * pattern length states", true, states.size() <= 2 * pattern.length());
-		check("a machine must have only one accepting state", (int) states.stream().filter(s -> s.accepting).count(), 1);
+		check("a machine for \"" + pattern + "\" has at most 2 * pattern length states", true, states.size() <= 2 * pattern.length());
+		check("a machine for \"" + pattern + "\" must have only one accepting state", (int) states.stream().filter(s -> s.accepting).count(), 1);
 
 		Set<State> reachable = reachableStates(machine.start);
 
-		check("every state in the machine is reachable from start", reachable.size(), states.size());
-		check("the accepting state is reachable from start", true, states.stream().filter(s -> s.accepting).allMatch(reachable::contains));
+		check("every state in a machine for \"" + pattern + "\" is reachable from start", reachable.size(), states.size());
+		check("the accepting state of a machine for \"" + pattern + "\" is reachable from start", true, states.stream().filter(s -> s.accepting).allMatch(reachable::contains));
 
 		boolean hasUnexpectedDeadEnd = false;
 		for (State s : states) {
@@ -33,9 +42,7 @@ public class NfaTest {
 				hasUnexpectedDeadEnd = true;
 			}
 		}
-		check("no state is a dangling dead end", hasUnexpectedDeadEnd, false);
-
-		report();
+		check("no state in a machine for \"" + pattern + "\" is a dangling dead end", hasUnexpectedDeadEnd, false);
 	}
 
 	// walk every arrow reachable from start using stack
