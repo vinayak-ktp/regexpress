@@ -7,7 +7,7 @@ import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
 import com.regexpress.nfa.NfaPrinter;
 import com.regexpress.parser.Parser;
-import com.regexpress.parser.RegexSyntaxException;
+import com.regexpress.tokenizer.RegexSyntaxException;
 
 public final class Main {
 

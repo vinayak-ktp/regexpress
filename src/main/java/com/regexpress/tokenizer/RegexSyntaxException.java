@@ -1,4 +1,4 @@
-package com.regexpress.parser;
+package com.regexpress.tokenizer;
 
 public final class RegexSyntaxException extends IllegalArgumentException {
 

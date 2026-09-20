@@ -13,6 +13,7 @@ import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
+import com.regexpress.tokenizer.RegexSyntaxException;
 
 public class ParserTest {
 	public static void main(String[] args) {

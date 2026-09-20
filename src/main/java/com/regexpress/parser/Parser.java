@@ -9,6 +9,7 @@ import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
+import com.regexpress.tokenizer.RegexSyntaxException;
 
 public final class Parser {
 
