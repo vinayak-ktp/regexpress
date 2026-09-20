@@ -33,7 +33,7 @@ public final class Tokenizer {
 	}
 
 	private static boolean isOperator(char c) {
-		String ops = "*+?|(){}[].,";
+		String ops = "*+?|(){}[].,^";
 		for (char op : ops.toCharArray()) {
 			if (c == op) return true;
 		}
