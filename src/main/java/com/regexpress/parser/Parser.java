@@ -11,6 +11,7 @@ import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
+import com.regexpress.tokenizer.ClassShorthand;
 import com.regexpress.tokenizer.End;
 import com.regexpress.tokenizer.Literal;
 import com.regexpress.tokenizer.Operator;
@@ -52,13 +53,6 @@ public final class Parser {
 		return tokens.get(index);
 	}
 
-	private char currentChar() {
-		Token token = current();
-		if (token instanceof Operator op) return op.symbol();
-		if (token instanceof Literal lit) return lit.value();
-		else throw error("expected an operator or a value");
-	}
-
 	private char consumeLiteral() {
 		if (current() instanceof Literal lit) {
 			index++;
@@ -68,21 +62,36 @@ public final class Parser {
 	}
 
 	private boolean tryConsumeOperator(char symbol) {
-		if (current() instanceof Operator op &&  op.symbol() == symbol) {
+		if (peekOperator(symbol)) {
 			index++;
 			return true;
 		}
 		return false;
 	}
 
+	private boolean peekOperator(char symbol) {
+		return current() instanceof Operator op && op.symbol() == symbol;
+	}
+
+	private boolean peekChar(char c) {
+		return current() instanceof Literal lit && lit.value() == c;
+	}
+
 	private char consumeChar() {
-		char c = currentChar();
-		index++;
-		return c;
+		Token token = current();
+		if (token instanceof Operator op) {
+			index++;
+			return op.symbol();
+		}
+		if (token instanceof Literal lit) {
+			index++;
+			return lit.value();
+		}
+		throw error("expected an operator or a value");
 	}
 
 	private boolean tryConsumeChar(char c) {
-		if (hasMore() && currentChar() == c) {
+		if (peekChar(c)) {
 			index++;
 			return true;
 		}
@@ -120,7 +129,7 @@ public final class Parser {
 	}
 
 	private boolean hasMoreItems() {
-		return hasMore() && currentChar() != '|' && currentChar() != ')';
+		return hasMore() && !peekOperator('|') && !peekOperator(')');
 	}
 
 	private Node parseRepetition() {
@@ -142,7 +151,7 @@ public final class Parser {
 		boolean unbounded = false;
 
 		if (tryConsumeChar(',')) {
-			if (hasMore() && currentChar() != '}') {
+			if (hasMore() && !peekOperator('}')) {
 				max = parseNumber();
 			} else {
 				unbounded = true;
@@ -189,7 +198,7 @@ public final class Parser {
 	private int parseNumber() {
 		int start = index;
 		int number = 0;
-		while (hasMore() && currentChar() != ',' && currentChar() != '}') {
+		while (hasMore() && !peekChar(',') && !peekOperator('}')) {
 			char c = consumeLiteral();
 			if (!(c >= '0' && c <= '9')) throw error("expected a digit");
 			number = number * 10 + (c - '0');
@@ -215,7 +224,14 @@ public final class Parser {
 			return charClass;
 		}
 
-		if (tryConsumeOperator('.')) return new CharSetNode(CharSet.all());
+		if (tryConsumeOperator('.')) {
+			return new CharSetNode(CharSet.all());
+		}
+
+		if (current() instanceof ClassShorthand cs) {
+			index++;
+			return new CharSetNode(CharSet.fromShorthand(cs.kind()));
+		}
 
 		if (current() instanceof Operator op) {
 			throw error("unexpected '" + op.symbol() + "'");
@@ -230,6 +246,12 @@ public final class Parser {
 		if (tryConsumeOperator('^')) set.negate();
 
 		while (hasMoreCharClassItems()) {
+			if (current() instanceof ClassShorthand cs) {
+				index++;
+				set.union(CharSet.fromShorthand(cs.kind()));
+				continue;
+			}
+
 			char a = consumeChar();
 			boolean isRangeChar = tryConsumeChar('-');
 
@@ -246,6 +268,6 @@ public final class Parser {
 	}
 
 	private boolean hasMoreCharClassItems() {
-		return hasMore() && currentChar() != ']';
+		return hasMore() && !peekOperator(']');
 	}
 }

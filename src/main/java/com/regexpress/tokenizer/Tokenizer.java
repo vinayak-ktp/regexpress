@@ -15,7 +15,7 @@ public final class Tokenizer {
 			char c = pattern.charAt(i);
 
 			if (escaped) {
-				tokens.add(new Literal(c, i));
+				tokens.add(isShorthand(c) ? new ClassShorthand(c, i) : new Literal(c, i));
 				escaped = false;
 			} else if (c == '\\') {
 				escaped = true;
@@ -32,11 +32,13 @@ public final class Tokenizer {
 		return tokens;
 	}
 
+	private static boolean isShorthand(char c) {
+		String shorthands = "dDwWsS";
+		return shorthands.indexOf(c) != -1;
+	}
+
 	private static boolean isOperator(char c) {
-		String ops = "*+?|(){}[].,^";
-		for (char op : ops.toCharArray()) {
-			if (c == op) return true;
-		}
-		return false;
+		String ops = "*+?|(){}[].^";
+		return ops.indexOf(c) != -1;
 	}
 }
