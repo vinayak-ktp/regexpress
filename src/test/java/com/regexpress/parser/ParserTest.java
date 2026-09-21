@@ -98,6 +98,40 @@ public class ParserTest {
 		checkThrows("rejects an empty bound", RegexSyntaxException.class, () -> Parser.parse(emptyBound));
 		checkThrows("rejects an unterminated bound", RegexSyntaxException.class, () -> Parser.parse(unterminatedBound));
 		checkThrows("rejects an empty maximum in a bound", RegexSyntaxException.class, () -> Parser.parse(emptyMaximum));
+		checkThrows("rejects a stray '{' with nothing to repeat", RegexSyntaxException.class, () -> Parser.parse("{3}"));
+		checkThrows("rejects a stray '}' with no opening bound", RegexSyntaxException.class, () -> Parser.parse("a}"));
+
+		// "[abc]"
+		CharSet abcSet = CharSet.of('a');
+		abcSet.union(CharSet.of('b'));
+		abcSet.union(CharSet.of('c'));
+		// "[a-]"
+		CharSet aOrDashSet = CharSet.of('a');
+		aOrDashSet.union(CharSet.of('-'));
+
+		// check character classes
+		check("a character class unions its members", new CharSetNode(abcSet), Parser.parse("[abc]"));
+		check("a character class range parses to a CharSet range", new CharSetNode(CharSet.range('a', 'c')), Parser.parse("[a-c]"));
+		check("a negated character class parses to a negated CharSet", new CharSetNode(CharSet.of('a').negate()), Parser.parse("[^a]"));
+		check("a trailing dash in a character class is a literal dash", new CharSetNode(aOrDashSet), Parser.parse("[a-]"));
+
+		// check escaping
+		check("an escaped operator parses to that literal character", new CharSetNode(CharSet.of('*')), Parser.parse("\\*"));
+		check("an escaped dot parses to a literal dot, not any-character", new CharSetNode(CharSet.of('.')), Parser.parse("\\."));
+		check("an escaped opening parenthesis does not start a group", new ConcatNode(new ConcatNode(charA, new CharSetNode(CharSet.of('('))), charB), Parser.parse("a\\(b"));
+
+		// "\d" and "\D"
+		Node digitShorthand = new CharSetNode(CharSet.digit());
+		Node notDigitShorthand = new CharSetNode(CharSet.digit().negate());
+		// "[\da-f]"
+		CharSet digitOrHexLetterSet = CharSet.digit();
+		digitOrHexLetterSet.union(CharSet.range('a', 'f'));
+
+		// check shorthand classes
+		check("an escaped letter without shorthand meaning parses to a literal letter", new CharSetNode(CharSet.of('n')), Parser.parse("\\n"));
+		check("\\d parses to the digit shorthand", digitShorthand, Parser.parse("\\d"));
+		check("\\D parses to the negated digit shorthand", notDigitShorthand, Parser.parse("\\D"));
+		check("a shorthand inside a character class unions with the rest of it", new CharSetNode(digitOrHexLetterSet), Parser.parse("[\\da-f]"));
 
 		report();
 	}

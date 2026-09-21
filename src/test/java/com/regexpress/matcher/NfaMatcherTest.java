@@ -53,6 +53,36 @@ public class NfaMatcherTest {
 		check("an empty pattern does not match a non-empty input", false, matches("", "a"));
 		check("an alternation with an empty branch matches an empty input", true, matches("a|", ""));
 
+		// check escaping
+		check("an escaped operator matches only its literal character", true, matches("a\\*b", "a*b"));
+		check("an escaped operator does not act as that operator", false, matches("a\\*b", "aaab"));
+		check("an escaped dot matches only a literal dot", true, matches("a\\.b", "a.b"));
+		check("an escaped dot does not match any character", false, matches("a\\.b", "axb"));
+
+		// check shorthand classes
+		check("\\d matches a digit", true, matches("\\d", "5"));
+		check("\\d rejects a letter", false, matches("\\d", "a"));
+		check("\\D matches a non-digit", true, matches("\\D", "a"));
+		check("\\D rejects a digit", false, matches("\\D", "5"));
+		check("\\w matches a letter, digit, or underscore", true, matches("\\w+", "abc_123"));
+		check("\\w rejects a space", false, matches("\\w", " "));
+		check("\\W matches a space", true, matches("\\W", " "));
+		check("\\s matches a space", true, matches("\\s", " "));
+		check("\\s matches a tab", true, matches("\\s", "\t"));
+		check("\\s rejects a letter", false, matches("\\s", "a"));
+
+		// check deliberate decisions
+		check("\\s does not include the vertical tab", false, matches("\\s", ""));
+
+		// check shorthands combined with character classes
+		check("a shorthand inside a class unions with the rest of the class", true, matches("[\\da-f]", "c"));
+		check("a shorthand inside a class still rejects characters outside every member", false, matches("[\\da-f]", "g"));
+		check("a negated shorthand inside a class contributes its complement", true, matches("[\\D]", "a"));
+		check("negating a class around a negated shorthand cancels back to the positive set", true, matches("[^\\D]", "5"));
+		check("negating a class around a negated shorthand still rejects what the shorthand rejected", false, matches("[^\\D]", "a"));
+		check("two negated shorthands unioned together cover a digit", true, matches("[\\D\\S]", "5"));
+		check("two negated shorthands unioned together cover a space", true, matches("[\\D\\S]", " "));
+
 		// check patterns that could hang the engine
 		check("a star wrapped around a star matches without hanging", true, matches("(a*)*", "aaaaaaaaa"));
 		check("ambiguous alternation inside a star rejects a long input quickly", false, matches("(a|a)*b", "a".repeat(30)));
@@ -79,8 +109,10 @@ public class NfaMatcherTest {
 		// for the syntax this engine currently supports (literals, concatenation, alternation, star,
 		// plus, optional, character classes, the any character and bounded repetition)
 		String[] patterns = { "a", "ab", "a|b", "a*", "ab*", "(a|b)*", "a(b|c)*", "(ab)*c",
-				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}" };
-		String[] inputs = { "", "a", "b", "c", "d", "ab", "ba", "aab", "abc", "aaa", "aaaa", "aaaaa", "abab" };
+				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
+				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]" };
+		String[] inputs = { "", "a", "b", "c", "d", "ab", "ba", "aab", "abc", "aaa", "aaaa", "aaaaa", "abab",
+				"5", "_", " ", "*", ".", "a*b", "a.b" };
 
 		for (String pattern : patterns) {
 			for (String input : inputs) {

@@ -14,7 +14,8 @@ import com.regexpress.parser.Parser;
 
 public class NfaTest {
 	public static void main(String[] args) {
-		String[] patterns = { "a|bcd|e*", "a+b?", "[a-c][^x]", "a{2,4}", "(ab){2}", "a**" };
+		String[] patterns = { "a|bcd|e*", "a+b?", "[a-c][^x]", "a{2,4}", "(ab){2}", "a**",
+				"\\d\\w\\s", "[\\d\\W]", "a\\*\\.b", "\\D+" };
 
 		for (String pattern : patterns) {
 			checkInvariants(pattern);
