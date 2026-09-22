@@ -21,7 +21,7 @@ public final class Main {
 //        String pattern = "ab|c)d";
 //        String pattern = "a|b?(cd+|e)*.";
 //        String pattern = "a[x-zt-vf-]c.";
-        String pattern = "a{2,}";
+        String pattern = "^a{2,}b$";
         String input = "aa";
 
         try {

@@ -8,10 +8,12 @@ import com.regexpress.ast.CharSet;
 import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
+import com.regexpress.ast.EndAnchorNode;
 import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
+import com.regexpress.ast.StartAnchorNode;
 
 public final class NfaBuilder {
 
@@ -41,6 +43,8 @@ public final class NfaBuilder {
 			case StarNode(Node child) -> buildStar(buildFragment(child));
 			case PlusNode(Node child) -> buildPlus(buildFragment(child));
 			case OptionalNode(Node child) -> buildOptional(buildFragment(child));
+			case StartAnchorNode() -> buildAssertion(Assertion.START);
+			case EndAnchorNode() -> buildAssertion(Assertion.END);
 			case EmptyNode() -> buildEmpty();
 		};
 	}
@@ -50,6 +54,14 @@ public final class NfaBuilder {
 		State out = newState();
 		in.set = set;
 		in.next = out;
+		return new Fragment(in, out);
+	}
+
+	private Fragment buildAssertion(Assertion kind) {
+		State in = newState();
+		State out = newState();
+		in.assertion = kind;
+		in.epsilon.add(out);
 		return new Fragment(in, out);
 	}
 

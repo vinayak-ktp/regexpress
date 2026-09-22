@@ -10,6 +10,10 @@ public final class NfaPrinter {
 		for (State s : machine.allStates) {
 			String line = "State " + String.format("%3d", s.id);
 
+			if (s.assertion != null) {
+				line += "  (assert " + s.assertion + ")";
+			}
+
 			if (s.next != null) {
 				line += "  ——" + s.set.toString() + "——>  " + s.next.id;
 			} else if (!s.epsilon.isEmpty()) {

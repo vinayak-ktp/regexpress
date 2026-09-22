@@ -7,10 +7,12 @@ import com.regexpress.ast.CharSet;
 import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
+import com.regexpress.ast.EndAnchorNode;
 import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
+import com.regexpress.ast.StartAnchorNode;
 import com.regexpress.tokenizer.ClassShorthand;
 import com.regexpress.tokenizer.End;
 import com.regexpress.tokenizer.Literal;
@@ -210,6 +212,14 @@ public final class Parser {
 	private Node parseAtom() {
 		if (!hasMore()) {
 			throw error("unexpected end of pattern");
+		}
+
+		if (tryConsumeOperator('^')) {
+			return new StartAnchorNode();
+		}
+
+		if (tryConsumeOperator('$')) {
+			return new EndAnchorNode();
 		}
 
 		if (tryConsumeOperator('(')) {

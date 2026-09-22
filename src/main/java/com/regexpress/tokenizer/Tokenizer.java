@@ -38,7 +38,7 @@ public final class Tokenizer {
 	}
 
 	private static boolean isOperator(char c) {
-		String ops = "*+?|(){}[].^";
+		String ops = "*+?|(){}[].^$";
 		return ops.indexOf(c) != -1;
 	}
 }

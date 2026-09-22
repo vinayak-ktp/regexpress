@@ -13,6 +13,8 @@ public final class State {
 	CharSet set;
 	State next;
 
+	Assertion assertion;
+
 	// free arrows
 	List<State> epsilon = new ArrayList<>();
 
@@ -25,6 +27,10 @@ public final class State {
 
 	public State next() {
 		return next;
+	}
+
+	public Assertion assertion() {
+		return assertion;
 	}
 
 	public List<State> epsilon() {
