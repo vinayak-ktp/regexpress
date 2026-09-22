@@ -9,10 +9,12 @@ import com.regexpress.ast.CharSet;
 import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
+import com.regexpress.ast.EndAnchorNode;
 import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
 import com.regexpress.ast.StarNode;
+import com.regexpress.ast.StartAnchorNode;
 import com.regexpress.tokenizer.RegexSyntaxException;
 
 public class ParserTest {
@@ -132,6 +134,14 @@ public class ParserTest {
 		check("\\d parses to the digit shorthand", digitShorthand, Parser.parse("\\d"));
 		check("\\D parses to the negated digit shorthand", notDigitShorthand, Parser.parse("\\D"));
 		check("a shorthand inside a character class unions with the rest of it", new CharSetNode(digitOrHexLetterSet), Parser.parse("[\\da-f]"));
+
+		// check anchors
+		check("a start anchor parses to a start anchor node", new StartAnchorNode(), Parser.parse("^"));
+		check("an end anchor parses to an end anchor node", new EndAnchorNode(), Parser.parse("$"));
+		check("a start anchor concatenates with what follows it", new ConcatNode(new StartAnchorNode(), charA), Parser.parse("^a"));
+		check("an end anchor concatenates with what precedes it", new ConcatNode(charA, new EndAnchorNode()), Parser.parse("a$"));
+		check("an anchor in the middle of a pattern still parses", new ConcatNode(new ConcatNode(charA, new StartAnchorNode()), charB), Parser.parse("a^b"));
+		check("an escaped dollar parses to a literal dollar", new CharSetNode(CharSet.of('$')), Parser.parse("\\$"));
 
 		report();
 	}

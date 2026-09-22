@@ -59,6 +59,17 @@ public class NfaMatcherTest {
 		check("an escaped dot matches only a literal dot", true, matches("a\\.b", "a.b"));
 		check("an escaped dot does not match any character", false, matches("a\\.b", "axb"));
 
+		// check anchors
+		check("a start anchor matches at the start of the input", true, matches("^a", "a"));
+		check("an end anchor matches at the end of the input", true, matches("a$", "a"));
+		check("both anchors together match the input between them", true, matches("^a$", "a"));
+		check("an end anchor alone matches the empty input", true, matches("$", ""));
+		check("an end anchor alone rejects a non-empty input", false, matches("$", "a"));
+		check("a lone start anchor rejects a non-empty input", false, matches("^", "a"));
+		check("a start anchor in the middle of the pattern rejects everything", false, matches("a^b", "ab"));
+		check("an end anchor in the middle of the pattern rejects everything", false, matches("$a", "a"));
+		check("an escaped dollar matches a literal dollar", true, matches("\\$", "$"));
+
 		// check shorthand classes
 		check("\\d matches a digit", true, matches("\\d", "5"));
 		check("\\d rejects a letter", false, matches("\\d", "a"));
@@ -107,10 +118,12 @@ public class NfaMatcherTest {
 
 		// check agreement with java.util.regex across every pattern and input combination,
 		// for the syntax this engine currently supports (literals, concatenation, alternation, star,
-		// plus, optional, character classes, the any character and bounded repetition)
+		// plus, optional, character classes, the any character, bounded repetition, escapes,
+		// shorthand classes and anchors)
 		String[] patterns = { "a", "ab", "a|b", "a*", "ab*", "(a|b)*", "a(b|c)*", "(ab)*c",
 				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
-				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]" };
+				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]",
+				"^a", "a$", "^a$", "$", "a$b", "$a" };
 		String[] inputs = { "", "a", "b", "c", "d", "ab", "ba", "aab", "abc", "aaa", "aaaa", "aaaaa", "abab",
 				"5", "_", " ", "*", ".", "a*b", "a.b" };
 
