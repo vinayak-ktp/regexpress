@@ -83,6 +83,7 @@ public class NfaMatcherTest {
 		check("\\s rejects a letter", false, matches("\\s", "a"));
 
 		// check deliberate decisions
+		check("the any character matches a newline", true, matches("a.c", "a\nc"));
 		check("\\s does not include the vertical tab", false, matches("\\s", ""));
 
 		// check shorthands combined with character classes
@@ -123,7 +124,7 @@ public class NfaMatcherTest {
 		String[] patterns = { "a", "ab", "a|b", "a*", "ab*", "(a|b)*", "a(b|c)*", "(ab)*c",
 				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
 				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]",
-				"^a", "a$", "^a$", "$", "a$b", "$a" };
+				"^a", "a$", "^a$", "$", "a$b", "$a", "^*", "a$?" };
 		String[] inputs = { "", "a", "b", "c", "d", "ab", "ba", "aab", "abc", "aaa", "aaaa", "aaaaa", "abab",
 				"5", "_", " ", "*", ".", "a*b", "a.b" };
 
