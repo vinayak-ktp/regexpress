@@ -10,6 +10,7 @@ import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.EndAnchorNode;
+import com.regexpress.ast.GroupNode;
 import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
@@ -22,9 +23,9 @@ public class ParserTest {
 		// "ab*"
 		Node expectedStarGripsOneChar = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new CharSetNode(CharSet.of('b'))));
 		// "(ab)*"
-		Node expectedStarGripsGroup = new StarNode(new ConcatNode(new CharSetNode(CharSet.of('a')), new CharSetNode(CharSet.of('b'))));
+		Node expectedStarGripsGroup = new StarNode(new GroupNode(new ConcatNode(new CharSetNode(CharSet.of('a')), new CharSetNode(CharSet.of('b'))), 0));
 		// "a|(bc)*"
-		Node expectedMixedPrecedence = new AlternateNode(new CharSetNode(CharSet.of('a')), new StarNode(new ConcatNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c')))));
+		Node expectedMixedPrecedence = new AlternateNode(new CharSetNode(CharSet.of('a')), new StarNode(new GroupNode(new ConcatNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c'))), 0)));
 
 		// check precedence
 		check("star grips only the character before it", expectedStarGripsOneChar, Parser.parse("ab*"));
@@ -41,14 +42,14 @@ public class ParserTest {
 
 		// check degenerate patterns
 		check("an empty pattern parses to an empty node", new EmptyNode(), Parser.parse(""));
-		check("an empty group parses to an empty node", new EmptyNode(), Parser.parse("()"));
+		check("an empty group parses to a group around an empty node", new GroupNode(new EmptyNode(), 0), Parser.parse("()"));
 		check("an alternation with an empty right branch parses correctly", new AlternateNode(new CharSetNode(CharSet.of('a')), new EmptyNode()), Parser.parse("a|"));
 		check("an alternation with both branches empty parses correctly", new AlternateNode(new EmptyNode(), new EmptyNode()), Parser.parse("|"));
 
 		// "a**"
 		Node stackedStars = new StarNode(new StarNode(new CharSetNode(CharSet.of('a'))));
 		// "(a*)*"
-		Node nestedClosure = new StarNode(new StarNode(new CharSetNode(CharSet.of('a'))));
+		Node nestedClosure = new StarNode(new GroupNode(new StarNode(new CharSetNode(CharSet.of('a'))), 0));
 
 		// check deliberate decisions
 		check("stacked stars are accepted", stackedStars, Parser.parse("a**"));
@@ -64,7 +65,7 @@ public class ParserTest {
 		// "a{2,}"
 		Node atLeastTwo = new ConcatNode(new ConcatNode(charA, charA), new StarNode(charA));
 		// "(ab){2}"
-		Node groupCopies = new ConcatNode(new ConcatNode(charA, charB), new ConcatNode(charA, charB));
+		Node groupCopies = new ConcatNode(new GroupNode(new ConcatNode(charA, charB), 0), new GroupNode(new ConcatNode(charA, charB), 0));
 		// "a{2}{2}"
 		Node stackedBounds = new ConcatNode(new ConcatNode(charA, charA), new ConcatNode(charA, charA));
 
