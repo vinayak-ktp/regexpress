@@ -1,0 +1,130 @@
+package com.regexpress.matcher;
+
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
+import com.regexpress.nfa.Assertion;
+import com.regexpress.nfa.Nfa;
+import com.regexpress.nfa.State;
+
+public final class PikeMatcher {
+
+	private PikeMatcher() { }
+
+	private record Candidate(State state, int start, int[] slots) { }
+
+	private static final class CandidateList {
+		private final List<Candidate> candidates;
+		private final Set<State> seen;
+		private boolean sealed;
+		private Candidate winner;
+
+		public CandidateList() {
+			candidates = new ArrayList<>();
+			seen = new HashSet<>();
+		}
+
+		private boolean add(Candidate candidate) {
+			if (sealed) {
+				return false;
+			}
+			if (!seen.add(candidate.state())) {
+				return false;
+			}
+
+			candidates.add(candidate);
+			if (candidate.state().accepting()) {
+				winner = candidate;
+				sealed = true;
+			}
+			return true;
+		}
+
+		private List<Candidate> list() {
+			return candidates;
+		}
+
+		private boolean hasAccepting() {
+			return sealed;
+		}
+
+		private Candidate winner() {
+			return winner;
+		}
+	}
+
+	public static Match find(Nfa machine, String input) {
+		return find(machine, input, 0);
+	}
+
+	// finds the leftmost match that starts at or after `from`
+	public static Match find(Nfa machine, String input, int from) {
+		int length = input.length();
+		CandidateList current = new CandidateList();
+		addCandidate(current, new Candidate(machine.start, from, freshSlots(machine)), from, length);
+
+		Match match = null;
+
+		for (int i = from; i <= length; i++) {
+			if (match == null && i > from) {
+				addCandidate(current, new Candidate(machine.start, i, freshSlots(machine)), i, length);
+			}
+
+			if (current.hasAccepting()) {
+				match = new Match(current.winner().start(), i, current.winner().slots());
+			}
+
+			if (i == length) break;
+
+			current = step(current, input.charAt(i), i + 1, length);
+		}
+
+		return match;
+	}
+
+	private static CandidateList step(CandidateList current, char c, int position, int length) {
+		CandidateList next = new CandidateList();
+		for (Candidate candidate : current.list()) {
+			State s = candidate.state();
+			if (s.next() != null && s.set().contains(c)) {
+				addCandidate(next, new Candidate(s.next(), candidate.start(), candidate.slots()), position, length);
+			}
+		}
+		return next;
+	}
+
+	private static void addCandidate(CandidateList list, Candidate candidate, int position, int length) {
+		State s = candidate.state();
+
+		if (s.assertion() != null && !holds(s.assertion(), position, length)) {
+			return;
+		}
+
+		if (s.saveSlot() != -1) {
+			int[] slots = candidate.slots().clone();
+			slots[s.saveSlot()] = position;
+			candidate = new Candidate(s, candidate.start(), slots);
+		}
+
+		if (!list.add(candidate)) {
+			return;
+		}
+
+		for (State target : s.epsilon()) {
+			addCandidate(list, new Candidate(target, candidate.start(), candidate.slots()), position, length);
+		}
+	}
+
+	private static int[] freshSlots(Nfa machine) {
+		int[] slots = new int[machine.groupCount * 2];
+		Arrays.fill(slots, -1);
+		return slots;
+	}
+
+	private static boolean holds(Assertion kind, int position, int length) {
+		return (kind == Assertion.START && position == 0) || (kind == Assertion.END && position == length);
+	}
+}

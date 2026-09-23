@@ -9,6 +9,7 @@ import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.EndAnchorNode;
+import com.regexpress.ast.GroupNode;
 import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
@@ -18,6 +19,7 @@ import com.regexpress.ast.StartAnchorNode;
 public final class NfaBuilder {
 
 	private final List<State> allStates = new ArrayList<>();
+	private int groupCount;
 
 	private NfaBuilder() { }
 
@@ -25,7 +27,7 @@ public final class NfaBuilder {
 		NfaBuilder builder = new NfaBuilder();
 		Fragment machine = builder.buildFragment(ast);
 		machine.exit.accepting = true;
-		return new Nfa(machine.entrance, builder.allStates);
+		return new Nfa(machine.entrance, builder.allStates, builder.groupCount);
 	}
 
 	private State newState() {
@@ -43,6 +45,7 @@ public final class NfaBuilder {
 			case StarNode(Node child) -> buildStar(buildFragment(child));
 			case PlusNode(Node child) -> buildPlus(buildFragment(child));
 			case OptionalNode(Node child) -> buildOptional(buildFragment(child));
+			case GroupNode(Node child, int index) -> buildGroup(buildFragment(child), index);
 			case StartAnchorNode() -> buildAssertion(Assertion.START);
 			case EndAnchorNode() -> buildAssertion(Assertion.END);
 			case EmptyNode() -> buildEmpty();
@@ -72,6 +75,21 @@ public final class NfaBuilder {
 		return new Fragment(in, out);
 	}
 
+	private Fragment buildGroup(Fragment child, int index) {
+		State in = newState();
+		State out = newState();
+
+		groupCount = Math.max(groupCount, index + 1);
+
+		in.saveSlot = 2 * index;
+		out.saveSlot = 2 * index + 1;
+
+		in.epsilon.add(child.entrance);
+		child.exit.epsilon.add(out);
+
+		return new Fragment(in, out);
+	}
+
 	private Fragment buildConcat(Fragment left, Fragment right) {
 		left.exit.epsilon.add(right.entrance);
 		return new Fragment(left.entrance, right.exit);
@@ -95,10 +113,9 @@ public final class NfaBuilder {
 		State out = newState();
 
 		in.epsilon.add(child.entrance);
-		child.exit.epsilon.add(out);
-
-		in.epsilon.add(out);
 		child.exit.epsilon.add(in);
+		child.exit.epsilon.add(out);
+		in.epsilon.add(out);
 
 		return new Fragment(in, out);
 	}
@@ -108,8 +125,8 @@ public final class NfaBuilder {
 		State out = newState();
 
 		in.epsilon.add(child.entrance);
+		child.exit.epsilon.add(child.entrance);
 		child.exit.epsilon.add(out);
-		out.epsilon.add(child.entrance);
 
 		return new Fragment(in, out);
 	}

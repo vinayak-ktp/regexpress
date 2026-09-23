@@ -21,6 +21,7 @@ public final class AstPrinter {
 			case StarNode(Node child) -> "\t".repeat(depth) + "Star\n" + tree(child, depth+1);
 			case PlusNode(Node child) -> "\t".repeat(depth) + "Plus\n" + tree(child, depth+1);
 			case OptionalNode(Node child) -> "\t".repeat(depth) + "Optional\n" + tree(child, depth+1);
+			case GroupNode(Node child, int index) -> "\t".repeat(depth) + "Group\n" + tree(child, depth+1);
 			case StartAnchorNode() -> "\t".repeat(depth) + "^";
 			case EndAnchorNode() -> "\t".repeat(depth) + "$";
 			case EmptyNode() -> "\t".repeat(depth) + "Empty";

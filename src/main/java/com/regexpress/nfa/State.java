@@ -8,6 +8,7 @@ import com.regexpress.ast.CharSet;
 public final class State {
 
 	int id;
+	int saveSlot = -1;
 
 	// labelled arrow
 	CharSet set;
@@ -20,6 +21,10 @@ public final class State {
 
 	// final state of the machine
 	boolean accepting;
+
+	public int saveSlot() {
+		return saveSlot;
+	}
 
 	public CharSet set() {
 		return set;

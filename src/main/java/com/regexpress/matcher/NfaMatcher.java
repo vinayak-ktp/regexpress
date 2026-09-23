@@ -19,26 +19,26 @@ public final class NfaMatcher {
 
 		for (int i = 0; i < length; i++) {
 			char c = input.charAt(i);
-			Set<State> next = new HashSet<>();
-
-			for (State s : current) {
-				if (s.next() != null && s.set().contains(c)) {
-					next.add(s.next());
-				}
-			}
-
-			if (next.isEmpty()) {
-				return false;
-			}
+			Set<State> next = step(current, c);
+			if (next.isEmpty()) return false;
 			current = epsilonClosure(next, i + 1, length);
 		}
 
-		for (State s : current) {
-			if (s.accepting()) {
-				return true;
+		return hasAcceptingState(current);
+	}
+
+	private static Set<State> step(Set<State> states, char c) {
+		Set<State> reachable = new HashSet<>();
+		for (State s : states) {
+			if (s.next() != null && s.set().contains(c)) {
+				reachable.add(s.next());
 			}
 		}
-		return false;
+		return reachable;
+	}
+
+	private static boolean hasAcceptingState(Set<State> states) {
+		return states.stream().anyMatch(State::accepting);
 	}
 
 	// all states that can be reached freely (via epsilon) from a set of states,
@@ -53,10 +53,11 @@ public final class NfaMatcher {
 			if (s.assertion() != null && !holds(s.assertion(), position, length)) {
 				continue;
 			}
-
-			if (!visited.add(s)) {
+			if (visited.contains(s)) {
 				continue;
 			}
+
+			visited.add(s);
 			for (State target : s.epsilon()) {
 				toVisit.push(target);
 			}

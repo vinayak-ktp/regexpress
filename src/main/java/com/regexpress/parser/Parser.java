@@ -8,6 +8,7 @@ import com.regexpress.ast.CharSetNode;
 import com.regexpress.ast.ConcatNode;
 import com.regexpress.ast.EmptyNode;
 import com.regexpress.ast.EndAnchorNode;
+import com.regexpress.ast.GroupNode;
 import com.regexpress.ast.Node;
 import com.regexpress.ast.OptionalNode;
 import com.regexpress.ast.PlusNode;
@@ -26,6 +27,7 @@ public final class Parser {
 	private final String pattern;
 	private final List<Token> tokens;
 	private int index;
+	private int groupCount;
 
 	private Parser(String pattern) {
 		this.pattern = pattern;
@@ -223,9 +225,10 @@ public final class Parser {
 		}
 
 		if (tryConsumeOperator('(')) {
+			int index = groupCount++;
 			Node inner = parseAlternation();
 			expect(')');
-			return inner;
+			return new GroupNode(inner, index);
 		}
 
 		if (tryConsumeOperator('[')) {
