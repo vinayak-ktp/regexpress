@@ -44,6 +44,13 @@ public class NfaMatcherTest {
 		check("an open bound matches any amount above its minimum", true, matches("a{2,}", "aaaa"));
 		check("an open bound rejects below its minimum", false, matches("a{2,}", "a"));
 
+		// check lazy quantifiers keep the same language as their greedy twins
+		check("a lazy star matches zero repetitions", true, matches("a*?", ""));
+		check("a lazy star matches several repetitions", true, matches("a*?", "aaa"));
+		check("a lazy star rejects what its greedy twin rejects", false, matches("a*?", "aab"));
+		check("a lazy any-star full-matches like its greedy twin", true, matches("<.*?>", "<b>x</b>"));
+		check("a lazy any-star rejects like its greedy twin", false, matches("<.*?>", "a<b>"));
+
 		// check full-match semantics
 		check("an input longer than the pattern does not match", false, matches("abc", "abcd"));
 		check("an input shorter than the pattern does not match", false, matches("abc", "ab"));
@@ -124,7 +131,8 @@ public class NfaMatcherTest {
 		String[] patterns = { "a", "ab", "a|b", "a*", "ab*", "(a|b)*", "a(b|c)*", "(ab)*c",
 				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
 				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]",
-				"^a", "a$", "^a$", "$", "a$b", "$a", "^*", "a$?" };
+				"^a", "a$", "^a$", "$", "a$b", "$a", "^*", "a$?",
+				"a*?", "a+?", "a??", "<.*?>" };
 		String[] inputs = { "", "a", "b", "c", "d", "ab", "ba", "aab", "abc", "aaa", "aaaa", "aaaaa", "abab",
 				"5", "_", " ", "*", ".", "a*b", "a.b" };
 

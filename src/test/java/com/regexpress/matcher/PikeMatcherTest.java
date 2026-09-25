@@ -25,6 +25,13 @@ public class PikeMatcherTest {
 		// check greediness when preference does not interfere
 		check("a greedy group takes as much as it can", "0..3 [0, 3, 3, 3]", describe(find("(a+)(a*)", "aaa")));
 
+		// check lazy quantifiers prefer the shortest match
+		check("a greedy any-star grabs as much as it can", "0..29 []", describe(find("<.*>", "<b>bold</b> and <i>italic</i>")));
+		check("a lazy any-star stops at the first closing bracket", "0..3 []", describe(find("<.*?>", "<b>bold</b> and <i>italic</i>")));
+		check("a lazy plus takes a single repetition", "0..1 []", describe(find("a+?", "aaa")));
+		check("a lazy star prefers matching nothing", "0..0 []", describe(find("a*?", "aaa")));
+		check("a lazy plus reports its single iteration", "0..1 [0, 1]", describe(find("(a|b)+?", "ab")));
+
 		// check group captures
 		check("a repeating group reports its last iteration", "0..2 [1, 2]", describe(find("(a|b)+", "ab")));
 		check("an optional group that never runs stays -1", "0..1 [-1, -1]", describe(find("(a)?b", "b")));
@@ -60,7 +67,8 @@ public class PikeMatcherTest {
 			"a|ab", "ab|a", "a|bb", "a*", "a+", "a?", "b+", "ab*", "a*b", "a{2,3}",
 			"(a|b)*", "a|b", "^a", "a$", "^a$", "^", "$", "x", "a{2,}",
 			"(a|ab)(c|bcd)", "(a)(b)", "(a)?", "(a*)", "(a|b)+", "(ab)*c", "(a+)(a*)",
-			"((a)b(c))", "(a(b(c)))", "(a|b|c)*", "(ab|a)(b?)"
+			"((a)b(c))", "(a(b(c)))", "(a|b|c)*", "(ab|a)(b?)",
+			"<.*>", "<.*?>", "a+?", "a*?", "a*?b", "(a|b)+?"
 		};
 		String[] inputs = {
 			"", "a", "b", "ab", "abc", "abcd", "abb", "abbbc", "aa", "aaa", "aab", "ba",

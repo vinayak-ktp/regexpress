@@ -7,11 +7,11 @@ import static com.regexpress.TestSupport.report;
 public class AstTest {
 	public static void main(String[] args) {
 		// "a(b|c)*"
-		Node treeA = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new AlternateNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c')))));
+		Node treeA = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new AlternateNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c'))), false));
 		// "a(b|c)*
-		Node treeB = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new AlternateNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c')))));
+		Node treeB = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new AlternateNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c'))), false));
 		// "a(b*|c)"
-		Node treeC = new ConcatNode(new CharSetNode(CharSet.of('a')), new AlternateNode(new StarNode(new CharSetNode(CharSet.of('b'))), new CharSetNode(CharSet.of('c'))));
+		Node treeC = new ConcatNode(new CharSetNode(CharSet.of('a')), new AlternateNode(new StarNode(new CharSetNode(CharSet.of('b')), false), new CharSetNode(CharSet.of('c'))));
 
 		Node emptyNodeA = new EmptyNode();
 		Node emptyNodeB = new EmptyNode();
@@ -30,9 +30,9 @@ public class AstTest {
 		checkThrows("AlternateNode rejects a null right child", NullPointerException.class, () -> new AlternateNode(new EmptyNode(), null));
 		checkThrows("ConcatNode rejects a null left child", NullPointerException.class, () -> new ConcatNode(null, new EmptyNode()));
 		checkThrows("ConcatNode rejects a null right child", NullPointerException.class, () -> new ConcatNode(new EmptyNode(), null));
-		checkThrows("StarNode rejects a null child", NullPointerException.class, () -> new StarNode(null));
-		checkThrows("PlusNode rejects a null child", NullPointerException.class, () -> new PlusNode(null));
-		checkThrows("OptionalNode rejects a null child", NullPointerException.class, () -> new OptionalNode(null));
+		checkThrows("StarNode rejects a null child", NullPointerException.class, () -> new StarNode(null, false));
+		checkThrows("PlusNode rejects a null child", NullPointerException.class, () -> new PlusNode(null, false));
+		checkThrows("OptionalNode rejects a null child", NullPointerException.class, () -> new OptionalNode(null, false));
 
 		report();
 	}

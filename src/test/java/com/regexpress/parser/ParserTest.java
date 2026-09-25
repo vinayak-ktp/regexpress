@@ -21,11 +21,11 @@ import com.regexpress.tokenizer.RegexSyntaxException;
 public class ParserTest {
 	public static void main(String[] args) {
 		// "ab*"
-		Node expectedStarGripsOneChar = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new CharSetNode(CharSet.of('b'))));
+		Node expectedStarGripsOneChar = new ConcatNode(new CharSetNode(CharSet.of('a')), new StarNode(new CharSetNode(CharSet.of('b')), false));
 		// "(ab)*"
-		Node expectedStarGripsGroup = new StarNode(new GroupNode(new ConcatNode(new CharSetNode(CharSet.of('a')), new CharSetNode(CharSet.of('b'))), 0));
+		Node expectedStarGripsGroup = new StarNode(new GroupNode(new ConcatNode(new CharSetNode(CharSet.of('a')), new CharSetNode(CharSet.of('b'))), 0), false);
 		// "a|(bc)*"
-		Node expectedMixedPrecedence = new AlternateNode(new CharSetNode(CharSet.of('a')), new StarNode(new GroupNode(new ConcatNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c'))), 0)));
+		Node expectedMixedPrecedence = new AlternateNode(new CharSetNode(CharSet.of('a')), new StarNode(new GroupNode(new ConcatNode(new CharSetNode(CharSet.of('b')), new CharSetNode(CharSet.of('c'))), 0), false));
 
 		// check precedence
 		check("star grips only the character before it", expectedStarGripsOneChar, Parser.parse("ab*"));
@@ -47,9 +47,9 @@ public class ParserTest {
 		check("an alternation with both branches empty parses correctly", new AlternateNode(new EmptyNode(), new EmptyNode()), Parser.parse("|"));
 
 		// "a**"
-		Node stackedStars = new StarNode(new StarNode(new CharSetNode(CharSet.of('a'))));
+		Node stackedStars = new StarNode(new StarNode(new CharSetNode(CharSet.of('a')), false), false);
 		// "(a*)*"
-		Node nestedClosure = new StarNode(new GroupNode(new StarNode(new CharSetNode(CharSet.of('a'))), 0));
+		Node nestedClosure = new StarNode(new GroupNode(new StarNode(new CharSetNode(CharSet.of('a')), false), 0), false);
 
 		// check deliberate decisions
 		check("stacked stars are accepted", stackedStars, Parser.parse("a**"));
@@ -61,9 +61,9 @@ public class ParserTest {
 		// "a{3}" and "a{3,3}"
 		Node exactCopies = new ConcatNode(new ConcatNode(charA, charA), charA);
 		// "a{2,4}"
-		Node boundedRange = new ConcatNode(new ConcatNode(charA, charA), new OptionalNode(new ConcatNode(charA, new OptionalNode(charA))));
+		Node boundedRange = new ConcatNode(new ConcatNode(charA, charA), new OptionalNode(new ConcatNode(charA, new OptionalNode(charA, false)), false));
 		// "a{2,}"
-		Node atLeastTwo = new ConcatNode(new ConcatNode(charA, charA), new StarNode(charA));
+		Node atLeastTwo = new ConcatNode(new ConcatNode(charA, charA), new StarNode(charA, false));
 		// "(ab){2}"
 		Node groupCopies = new ConcatNode(new GroupNode(new ConcatNode(charA, charB), 0), new GroupNode(new ConcatNode(charA, charB), 0));
 		// "a{2}{2}"
@@ -78,10 +78,17 @@ public class ParserTest {
 		check("stacked bounds are accepted", stackedBounds, Parser.parse("a{2}{2}"));
 
 		// check normalized bounds
-		check("an open bound with a zero minimum is a star", new StarNode(charA), Parser.parse("a{0,}"));
-		check("an open bound with a one minimum is a plus", new PlusNode(charA), Parser.parse("a{1,}"));
-		check("a zero-to-one bound is an optional", new OptionalNode(charA), Parser.parse("a{0,1}"));
+		check("an open bound with a zero minimum is a star", new StarNode(charA, false), Parser.parse("a{0,}"));
+		check("an open bound with a one minimum is a plus", new PlusNode(charA, false), Parser.parse("a{1,}"));
+		check("a zero-to-one bound is an optional", new OptionalNode(charA, false), Parser.parse("a{0,1}"));
 		check("a zero bound parses to an empty node", new EmptyNode(), Parser.parse("a{0}"));
+
+		// check lazy quantifiers
+		check("a lazy star parses with the lazy flag", new StarNode(charA, true), Parser.parse("a*?"));
+		check("a lazy plus parses with the lazy flag", new PlusNode(charA, true), Parser.parse("a+?"));
+		check("a lazy optional parses with the lazy flag", new OptionalNode(charA, true), Parser.parse("a??"));
+		check("a lazy quantifier does not equal its greedy twin", new StarNode(charA, true), Parser.parse("a*"), false);
+		check("a lazy star around a group still grips the group", new StarNode(new GroupNode(charA, 0), true), Parser.parse("(a)*?"));
 
 		String strayStar = "a|*b";
 		String unopenedParen = "ab)c";
