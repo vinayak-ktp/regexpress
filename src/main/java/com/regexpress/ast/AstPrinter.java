@@ -18,9 +18,9 @@ public final class AstPrinter {
 			case CharSetNode c -> "\t".repeat(depth) + c.toString();
 			case ConcatNode(Node left, Node right) -> "\t".repeat(depth) + "Concat\n" + tree(left, depth+1) + "\n" + tree(right, depth+1);
 			case AlternateNode(Node left, Node right) -> "\t".repeat(depth) + "Alternate\n" + tree(left, depth+1) + "\n" + tree(right, depth+1);
-			case StarNode(Node child) -> "\t".repeat(depth) + "Star\n" + tree(child, depth+1);
-			case PlusNode(Node child) -> "\t".repeat(depth) + "Plus\n" + tree(child, depth+1);
-			case OptionalNode(Node child) -> "\t".repeat(depth) + "Optional\n" + tree(child, depth+1);
+			case StarNode(Node child, boolean lazy) -> "\t".repeat(depth) + (lazy ? "LazyStar" : "Star") + "\n" + tree(child, depth+1);
+			case PlusNode(Node child, boolean lazy) -> "\t".repeat(depth) + (lazy ? "LazyPlus" : "Plus") + "\n" + tree(child, depth+1);
+			case OptionalNode(Node child, boolean lazy) -> "\t".repeat(depth) + (lazy ? "LazyOptional" : "Optional") + "\n" + tree(child, depth+1);
 			case GroupNode(Node child, int index) -> "\t".repeat(depth) + "Group\n" + tree(child, depth+1);
 			case StartAnchorNode() -> "\t".repeat(depth) + "^";
 			case EndAnchorNode() -> "\t".repeat(depth) + "$";

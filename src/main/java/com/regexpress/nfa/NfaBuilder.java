@@ -42,9 +42,9 @@ public final class NfaBuilder {
 			case CharSetNode(CharSet set) -> buildCharSet(set);
 			case ConcatNode(Node left, Node right) -> buildConcat(buildFragment(left), buildFragment(right));
 			case AlternateNode(Node left, Node right) -> buildAlternate(buildFragment(left), buildFragment(right));
-			case StarNode(Node child) -> buildStar(buildFragment(child));
-			case PlusNode(Node child) -> buildPlus(buildFragment(child));
-			case OptionalNode(Node child) -> buildOptional(buildFragment(child));
+			case StarNode(Node child, boolean lazy) -> buildStar(buildFragment(child), lazy);
+			case PlusNode(Node child, boolean lazy) -> buildPlus(buildFragment(child), lazy);
+			case OptionalNode(Node child, boolean lazy) -> buildOptional(buildFragment(child), lazy);
 			case GroupNode(Node child, int index) -> buildGroup(buildFragment(child), index);
 			case StartAnchorNode() -> buildAssertion(Assertion.START);
 			case EndAnchorNode() -> buildAssertion(Assertion.END);
@@ -108,36 +108,53 @@ public final class NfaBuilder {
 		return new Fragment(in, out);
 	}
 
-	private Fragment buildStar(Fragment child) {
+	private Fragment buildStar(Fragment child, boolean lazy) {
 		State in = newState();
 		State out = newState();
 
-		in.epsilon.add(child.entrance);
-		child.exit.epsilon.add(in);
-		child.exit.epsilon.add(out);
-		in.epsilon.add(out);
+		if (lazy) {
+			in.epsilon.add(out);
+			in.epsilon.add(child.entrance);
+			child.exit.epsilon.add(out);
+			child.exit.epsilon.add(in);
+		} else {
+			in.epsilon.add(child.entrance);
+			child.exit.epsilon.add(in);
+			child.exit.epsilon.add(out);
+			in.epsilon.add(out);
+		}
 
 		return new Fragment(in, out);
 	}
 
-	private Fragment buildPlus(Fragment child) {
+	private Fragment buildPlus(Fragment child, boolean lazy) {
 		State in = newState();
 		State out = newState();
 
 		in.epsilon.add(child.entrance);
-		child.exit.epsilon.add(child.entrance);
-		child.exit.epsilon.add(out);
+		if (lazy) {
+			child.exit.epsilon.add(out);
+			child.exit.epsilon.add(child.entrance);
+		} else {
+			child.exit.epsilon.add(child.entrance);
+			child.exit.epsilon.add(out);
+		}
 
 		return new Fragment(in, out);
 	}
 
-	private Fragment buildOptional(Fragment child) {
+	private Fragment buildOptional(Fragment child, boolean lazy) {
 		State in = newState();
 		State out = newState();
 
-		in.epsilon.add(child.entrance);
+		if (lazy) {
+			in.epsilon.add(out);
+			in.epsilon.add(child.entrance);
+		} else {
+			in.epsilon.add(child.entrance);
+			in.epsilon.add(out);
+		}
 		child.exit.epsilon.add(out);
-		in.epsilon.add(out);
 
 		return new Fragment(in, out);
 	}

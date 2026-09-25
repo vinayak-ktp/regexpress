@@ -2,13 +2,13 @@ package com.regexpress.ast;
 
 import java.util.Objects;
 
-public record OptionalNode(Node child) implements Node {
+public record OptionalNode(Node child, boolean lazy) implements Node {
 	public OptionalNode {
 		Objects.requireNonNull(child, "child must not be null");
 	}
 
 	@Override
 	public String toString() {
-		return "Optional(" + child.toString() + ")";
+		return lazy ? "Optional(" + child.toString() + ", lazy)" : "Optional(" + child.toString() + ")";
 	}
 }

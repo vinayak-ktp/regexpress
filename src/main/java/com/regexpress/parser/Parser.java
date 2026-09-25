@@ -140,9 +140,9 @@ public final class Parser {
 		Node node = parseAtom();
 
 		while (hasMore()) {
-			if (tryConsumeOperator('*')) node = new StarNode(node);
-			else if (tryConsumeOperator('+')) node = new PlusNode(node);
-			else if (tryConsumeOperator('?')) node = new OptionalNode(node);
+			if (tryConsumeOperator('*')) node = new StarNode(node, tryConsumeOperator('?'));
+			else if (tryConsumeOperator('+')) node = new PlusNode(node, tryConsumeOperator('?'));
+			else if (tryConsumeOperator('?')) node = new OptionalNode(node, tryConsumeOperator('?'));
 			else if (tryConsumeOperator('{')) node = parseBounds(node);
 			else break;
 		}
@@ -171,13 +171,13 @@ public final class Parser {
 		Node required = repeat(node, min);
 
 		if (unbounded) {
-			if (min == 0) return new StarNode(node);
-			if (min == 1) return new PlusNode(node);
-			return new ConcatNode(required, new StarNode(node));
+			if (min == 0) return new StarNode(node, false);
+			if (min == 1) return new PlusNode(node, false);
+			return new ConcatNode(required, new StarNode(node, false));
 		}
 
 		if (max == min) return required;
-		if (min == 0 && max == 1) return new OptionalNode(node);
+		if (min == 0 && max == 1) return new OptionalNode(node, false);
 
 		return new ConcatNode(required, atMost(node, max - min));
 	}
@@ -192,9 +192,9 @@ public final class Parser {
 	}
 
 	private static Node atMost(Node node, int count) {
-		Node result = new OptionalNode(node);
+		Node result = new OptionalNode(node, false);
 		for (int i = 1; i < count; i++) {
-			result = new OptionalNode(new ConcatNode(node, result));
+			result = new OptionalNode(new ConcatNode(node, result), false);
 		}
 		return result;
 	}
