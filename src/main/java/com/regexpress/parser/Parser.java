@@ -225,6 +225,14 @@ public final class Parser {
 		}
 
 		if (tryConsumeOperator('(')) {
+			if (tryConsumeOperator('?')) {
+				if (!tryConsumeChar(':')) {
+					throw error("unsupported group modifier");
+				}
+				Node inner = parseAlternation();
+				expect(')');
+				return inner;
+			}
 			int index = groupCount++;
 			Node inner = parseAlternation();
 			expect(')');
