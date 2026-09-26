@@ -90,6 +90,13 @@ public class ParserTest {
 		check("a lazy quantifier does not equal its greedy twin", new StarNode(charA, true), Parser.parse("a*"), false);
 		check("a lazy star around a group still grips the group", new StarNode(new GroupNode(charA, 0), true), Parser.parse("(a)*?"));
 
+		// check non-capturing groups
+		check("a non-capturing group leaves no node in the tree", new StarNode(new ConcatNode(charA, charB), false), Parser.parse("(?:ab)*"));
+		check("a non-capturing group does not consume a group number",
+			new ConcatNode(new ConcatNode(new GroupNode(charA, 0), charB), new GroupNode(new CharSetNode(CharSet.of('c')), 1)), Parser.parse("(a)(?:b)(c)"));
+		checkThrows("rejects an unsupported group modifier", RegexSyntaxException.class, () -> Parser.parse("(?=a)"));
+		checkThrows("rejects a group opening with a bare question mark", RegexSyntaxException.class, () -> Parser.parse("(?a)"));
+
 		String strayStar = "a|*b";
 		String unopenedParen = "ab)c";
 		String unclosedParen = "a(bc";

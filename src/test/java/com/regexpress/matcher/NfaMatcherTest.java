@@ -51,6 +51,10 @@ public class NfaMatcherTest {
 		check("a lazy any-star full-matches like its greedy twin", true, matches("<.*?>", "<b>x</b>"));
 		check("a lazy any-star rejects like its greedy twin", false, matches("<.*?>", "a<b>"));
 
+		// check non-capturing groups
+		check("a non-capturing group still groups", true, matches("(?:ab)+", "abab"));
+		check("a non-capturing group rejects like a capturing one", false, matches("(?:ab)+", "ababa"));
+
 		// check full-match semantics
 		check("an input longer than the pattern does not match", false, matches("abc", "abcd"));
 		check("an input shorter than the pattern does not match", false, matches("abc", "ab"));
@@ -132,7 +136,7 @@ public class NfaMatcherTest {
 				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
 				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]",
 				"^a", "a$", "^a$", "$", "a$b", "$a", "^*", "a$?",
-				"a*?", "a+?", "a??", "<.*?>" };
+				"a*?", "a+?", "a??", "<.*?>", "(?:ab)+" };
 		String[] inputs = { "", "a", "b", "c", "d", "ab", "ba", "aab", "abc", "aaa", "aaaa", "aaaaa", "abab",
 				"5", "_", " ", "*", ".", "a*b", "a.b" };
 

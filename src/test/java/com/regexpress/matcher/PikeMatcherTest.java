@@ -32,6 +32,9 @@ public class PikeMatcherTest {
 		check("a lazy star prefers matching nothing", "0..0 []", describe(find("a*?", "aaa")));
 		check("a lazy plus reports its single iteration", "0..1 [0, 1]", describe(find("(a|b)+?", "ab")));
 
+		// check non-capturing groups are not reported
+		check("a non-capturing group leaves no slot", "0..2 [1, 2]", describe(find("(?:a)(b)", "ab")));
+
 		// check group captures
 		check("a repeating group reports its last iteration", "0..2 [1, 2]", describe(find("(a|b)+", "ab")));
 		check("an optional group that never runs stays -1", "0..1 [-1, -1]", describe(find("(a)?b", "b")));
@@ -68,7 +71,8 @@ public class PikeMatcherTest {
 			"(a|b)*", "a|b", "^a", "a$", "^a$", "^", "$", "x", "a{2,}",
 			"(a|ab)(c|bcd)", "(a)(b)", "(a)?", "(a*)", "(a|b)+", "(ab)*c", "(a+)(a*)",
 			"((a)b(c))", "(a(b(c)))", "(a|b|c)*", "(ab|a)(b?)",
-			"<.*>", "<.*?>", "a+?", "a*?", "a*?b", "(a|b)+?"
+			"<.*>", "<.*?>", "a+?", "a*?", "a*?b", "(a|b)+?",
+			"(?:a)(b)", "(?:ab)+", "(?:a|b)*c"
 		};
 		String[] inputs = {
 			"", "a", "b", "ab", "abc", "abcd", "abb", "abbbc", "aa", "aaa", "aab", "ba",
