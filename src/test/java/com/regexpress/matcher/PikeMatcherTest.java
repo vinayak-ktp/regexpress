@@ -4,6 +4,7 @@ import static com.regexpress.TestSupport.check;
 import static com.regexpress.TestSupport.report;
 
 import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -58,6 +59,20 @@ public class PikeMatcherTest {
 		check("find-all lists every occurrence with fresh groups", "0..2 [0, 1, 1, 2]; 2..4 [2, 3, 3, 4]",
 			findAll("(a)(b)", "abab"));
 
+		// check replace built on find-all
+		check("replace swaps every occurrence", "the X and the X", replaceAll("cat|dog", "the cat and the dog", "X"));
+		check("replace keeps the text between matches", "XbX", replaceAll("a", "aba", "X"));
+		check("replace of a pattern matching empty fills the gaps", "-b-b-b-", replaceAll("a*", "bbb", "-"));
+		check("replace with no match returns the input", "abc", replaceAll("x", "abc", "X"));
+
+		// check split built on find-all
+		check("split collects the gaps between matches", List.of("a", "b", "c"), split("\\d+", "a1b22c"));
+		check("split keeps a leading empty piece but drops trailing empties", List.of("", "a"), split("\\d", "1a2"));
+		check("split with no match returns the whole input as one piece", List.of("abc"), split("x", "abc"));
+		check("split drops every trailing empty piece", List.of(), split("a*", "aaa"));
+		check("split skips an empty leading match", List.of(","), split("x*", ","));
+		check("split on an empty pattern splits between characters", List.of("a", "b"), split("", "ab"));
+
 		// check performance at scale
 		check("a repeated group matches a very large input", "0..20000 [19998, 20000]",
 			describe(find("(ab)*", "ab".repeat(10000))));
@@ -65,7 +80,8 @@ public class PikeMatcherTest {
 		// check agreement with java.util.regex across every pattern and input combination,
 		// for the syntax this engine currently supports (literals, concatenation, alternation,
 		// star, plus, optional, character classes, the any character, bounded repetition,
-		// escapes, anchors and capture groups) — every occurrence, with bounds and groups
+		// escapes, anchors, capture groups, lazy and non-capturing groups) — every
+		// occurrence, with bounds and groups, plus replace-all and split
 		String[] patterns = {
 			"a|ab", "ab|a", "a|bb", "a*", "a+", "a?", "b+", "ab*", "a*b", "a{2,3}",
 			"(a|b)*", "a|b", "^a", "a$", "^a$", "^", "$", "x", "a{2,}",
@@ -84,6 +100,10 @@ public class PikeMatcherTest {
 			for (String input : inputs) {
 				check("java.util.regex agrees for pattern \"" + pattern + "\" against input \"" + input + "\"",
 					findAllJava(pattern, input, machine.groupCount), findAll(pattern, input));
+				check("java.util.regex replaceAll agrees for pattern \"" + pattern + "\" against input \"" + input + "\"",
+					input.replaceAll(pattern, "-"), replaceAll(pattern, input, "-"));
+				check("java.util.regex split agrees for pattern \"" + pattern + "\" against input \"" + input + "\"",
+					List.of(input.split(pattern)), split(pattern, input));
 			}
 		}
 
@@ -96,6 +116,14 @@ public class PikeMatcherTest {
 
 	private static Match find(String pattern, String input, int from) {
 		return PikeMatcher.find(NfaBuilder.build(Parser.parse(pattern)), input, from);
+	}
+
+	private static String replaceAll(String pattern, String input, String replacement) {
+		return PikeMatcher.replaceAll(NfaBuilder.build(Parser.parse(pattern)), input, replacement);
+	}
+
+	private static List<String> split(String pattern, String input) {
+		return PikeMatcher.split(NfaBuilder.build(Parser.parse(pattern)), input);
 	}
 
 	private static String describe(Match match) {
