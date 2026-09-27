@@ -85,6 +85,58 @@ public final class PikeMatcher {
 		return match;
 	}
 
+	// replaces every match with the given literal text
+	public static String replaceAll(Nfa machine, String input, String replacement) {
+		StringBuilder result = new StringBuilder();
+		int last = 0;
+		int from = 0;
+		while (from <= input.length()) {
+			Match match = find(machine, input, from);
+			if (match == null) {
+				break;
+			}
+			result.append(input, last, match.start());
+			result.append(replacement);
+			last = match.end();
+			from = match.end() == match.start() ? match.end() + 1 : match.end();
+		}
+		result.append(input, last, input.length());
+		return result.toString();
+	}
+
+	// splits the input on every match, like String.split
+	public static List<String> split(Nfa machine, String input) {
+		List<String> pieces = new ArrayList<>();
+		int last = 0;
+		int from = 0;
+		boolean matched = false;
+		while (from <= input.length()) {
+			Match match = find(machine, input, from);
+			if (match == null) {
+				break;
+			}
+			if (match.start() == match.end() && !matched && match.start() == 0) {
+				from = match.end() + 1; // an empty leading match contributes no piece
+				continue;
+			}
+			pieces.add(input.substring(last, match.start()));
+			matched = true;
+			last = match.end();
+			from = match.end() == match.start() ? match.end() + 1 : match.end();
+		}
+
+		if (!matched) {
+			pieces.add(input);
+			return pieces;
+		}
+
+		pieces.add(input.substring(last));
+		while (!pieces.isEmpty() && pieces.getLast().isEmpty()) {
+			pieces.removeLast();
+		}
+		return pieces;
+	}
+
 	private static CandidateList step(CandidateList current, char c, int position, int length) {
 		CandidateList next = new CandidateList();
 		for (Candidate candidate : current.list()) {
