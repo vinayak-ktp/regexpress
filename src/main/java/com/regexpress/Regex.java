@@ -1,7 +1,10 @@
 package com.regexpress;
 
+import java.util.List;
+
 import com.regexpress.ast.Node;
 import com.regexpress.matcher.NfaMatcher;
+import com.regexpress.matcher.PikeMatcher;
 import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
 import com.regexpress.parser.Parser;
@@ -27,5 +30,24 @@ public class Regex {
 	// for one-off use only!!!
 	public static boolean matches(String pattern, String input) {
 		return compile(pattern).matches(input);
+	}
+
+	// the leftmost match, or null if the pattern does not occur
+	public Match find(String input) {
+		return find(input, 0);
+	}
+
+	// the leftmost match starting at or after `from`, or null
+	public Match find(String input, int from) {
+		com.regexpress.matcher.Match found = PikeMatcher.find(machine, input, from);
+		return found == null ? null : new Match(input, found);
+	}
+
+	public String replaceAll(String input, String replacement) {
+		return PikeMatcher.replaceAll(machine, input, replacement);
+	}
+
+	public List<String> split(String input) {
+		return PikeMatcher.split(machine, input);
 	}
 }
