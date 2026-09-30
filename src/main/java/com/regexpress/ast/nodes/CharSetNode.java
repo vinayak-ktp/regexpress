@@ -1,4 +1,6 @@
-package com.regexpress.ast;
+package com.regexpress.ast.nodes;
+
+import com.regexpress.ast.CharSet;
 
 public record CharSetNode(CharSet set) implements Node {
 	@Override

@@ -3,18 +3,18 @@ package com.regexpress.nfa;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.regexpress.ast.AlternateNode;
+import com.regexpress.ast.nodes.AlternateNode;
 import com.regexpress.ast.CharSet;
-import com.regexpress.ast.CharSetNode;
-import com.regexpress.ast.ConcatNode;
-import com.regexpress.ast.EmptyNode;
-import com.regexpress.ast.EndAnchorNode;
-import com.regexpress.ast.GroupNode;
-import com.regexpress.ast.Node;
-import com.regexpress.ast.OptionalNode;
-import com.regexpress.ast.PlusNode;
-import com.regexpress.ast.StarNode;
-import com.regexpress.ast.StartAnchorNode;
+import com.regexpress.ast.nodes.CharSetNode;
+import com.regexpress.ast.nodes.ConcatNode;
+import com.regexpress.ast.nodes.EmptyNode;
+import com.regexpress.ast.nodes.EndAnchorNode;
+import com.regexpress.ast.nodes.GroupNode;
+import com.regexpress.ast.nodes.Node;
+import com.regexpress.ast.nodes.OptionalNode;
+import com.regexpress.ast.nodes.PlusNode;
+import com.regexpress.ast.nodes.StarNode;
+import com.regexpress.ast.nodes.StartAnchorNode;
 
 public final class NfaBuilder {
 

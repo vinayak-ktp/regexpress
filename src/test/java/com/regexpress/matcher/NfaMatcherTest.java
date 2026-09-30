@@ -5,7 +5,7 @@ import static com.regexpress.TestSupport.report;
 
 import java.util.regex.Pattern;
 
-import com.regexpress.ast.Node;
+import com.regexpress.ast.nodes.Node;
 import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
 import com.regexpress.parser.Parser;

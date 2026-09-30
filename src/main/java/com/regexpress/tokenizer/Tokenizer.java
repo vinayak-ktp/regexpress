@@ -3,6 +3,12 @@ package com.regexpress.tokenizer;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.regexpress.tokenizer.tokens.ClassShorthand;
+import com.regexpress.tokenizer.tokens.End;
+import com.regexpress.tokenizer.tokens.Literal;
+import com.regexpress.tokenizer.tokens.Operator;
+import com.regexpress.tokenizer.tokens.Token;
+
 public final class Tokenizer {
 
 	private Tokenizer() { }

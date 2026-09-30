@@ -1,8 +1,10 @@
-package com.regexpress.ast;
+package com.regexpress.ast.nodes;
 
 import static com.regexpress.TestSupport.check;
 import static com.regexpress.TestSupport.checkThrows;
 import static com.regexpress.TestSupport.report;
+
+import com.regexpress.ast.CharSet;
 
 public class AstTest {
 	public static void main(String[] args) {

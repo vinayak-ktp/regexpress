@@ -1,4 +1,4 @@
-package com.regexpress.ast;
+package com.regexpress.ast.nodes;
 
 public record EmptyNode() implements Node {
 	@Override

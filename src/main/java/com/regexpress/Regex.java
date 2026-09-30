@@ -2,7 +2,7 @@ package com.regexpress;
 
 import java.util.List;
 
-import com.regexpress.ast.Node;
+import com.regexpress.ast.nodes.Node;
 import com.regexpress.matcher.NfaMatcher;
 import com.regexpress.matcher.PikeMatcher;
 import com.regexpress.nfa.Nfa;
