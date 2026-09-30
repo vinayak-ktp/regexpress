@@ -6,6 +6,11 @@ import static com.regexpress.TestSupport.report;
 
 import java.util.List;
 
+import com.regexpress.tokenizer.tokens.ClassShorthand;
+import com.regexpress.tokenizer.tokens.End;
+import com.regexpress.tokenizer.tokens.Literal;
+import com.regexpress.tokenizer.tokens.Operator;
+
 public class TokenizerTest {
 	public static void main(String[] args) {
 		// check ordinary characters and operators

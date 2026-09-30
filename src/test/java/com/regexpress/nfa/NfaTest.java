@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import com.regexpress.ast.Node;
+import com.regexpress.ast.nodes.Node;
 import com.regexpress.parser.Parser;
 
 public class NfaTest {

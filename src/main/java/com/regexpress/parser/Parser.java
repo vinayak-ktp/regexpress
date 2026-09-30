@@ -2,24 +2,24 @@ package com.regexpress.parser;
 
 import java.util.List;
 
-import com.regexpress.ast.AlternateNode;
+import com.regexpress.ast.nodes.AlternateNode;
 import com.regexpress.ast.CharSet;
-import com.regexpress.ast.CharSetNode;
-import com.regexpress.ast.ConcatNode;
-import com.regexpress.ast.EmptyNode;
-import com.regexpress.ast.EndAnchorNode;
-import com.regexpress.ast.GroupNode;
-import com.regexpress.ast.Node;
-import com.regexpress.ast.OptionalNode;
-import com.regexpress.ast.PlusNode;
-import com.regexpress.ast.StarNode;
-import com.regexpress.ast.StartAnchorNode;
-import com.regexpress.tokenizer.ClassShorthand;
-import com.regexpress.tokenizer.End;
-import com.regexpress.tokenizer.Literal;
-import com.regexpress.tokenizer.Operator;
+import com.regexpress.ast.nodes.CharSetNode;
+import com.regexpress.ast.nodes.ConcatNode;
+import com.regexpress.ast.nodes.EmptyNode;
+import com.regexpress.ast.nodes.EndAnchorNode;
+import com.regexpress.ast.nodes.GroupNode;
+import com.regexpress.ast.nodes.Node;
+import com.regexpress.ast.nodes.OptionalNode;
+import com.regexpress.ast.nodes.PlusNode;
+import com.regexpress.ast.nodes.StarNode;
+import com.regexpress.ast.nodes.StartAnchorNode;
+import com.regexpress.tokenizer.tokens.ClassShorthand;
+import com.regexpress.tokenizer.tokens.End;
+import com.regexpress.tokenizer.tokens.Literal;
+import com.regexpress.tokenizer.tokens.Operator;
 import com.regexpress.tokenizer.RegexSyntaxException;
-import com.regexpress.tokenizer.Token;
+import com.regexpress.tokenizer.tokens.Token;
 import com.regexpress.tokenizer.Tokenizer;
 
 public final class Parser {
