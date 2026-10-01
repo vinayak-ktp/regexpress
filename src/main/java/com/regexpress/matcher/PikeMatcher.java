@@ -63,6 +63,13 @@ public final class PikeMatcher {
 	// finds the leftmost match that starts at or after `from`
 	public static Match find(Nfa machine, String input, int from) {
 		int length = input.length();
+		if (!machine.nullable) {
+			// nothing is in flight yet: skip straight to the next position a match could start at
+			from = nextStart(machine, input, from);
+			if (from < 0) {
+				return null;
+			}
+		}
 		CandidateList current = new CandidateList();
 		addCandidate(current, new Candidate(machine.start, from, freshSlots(machine)), from, length);
 
@@ -70,6 +77,14 @@ public final class PikeMatcher {
 
 		for (int i = from; i <= length; i++) {
 			if (match == null && i > from) {
+				if (current.list().isEmpty() && !machine.nullable) {
+					// no thread in flight and no match yet: jump to the next possible start
+					int next = nextStart(machine, input, i);
+					if (next < 0) {
+						return null;
+					}
+					i = next;
+				}
 				addCandidate(current, new Candidate(machine.start, i, freshSlots(machine)), i, length);
 			}
 
@@ -83,6 +98,23 @@ public final class PikeMatcher {
 		}
 
 		return match;
+	}
+
+	// the next position a match could start at, or -1 when there is none
+	private static int nextStart(Nfa machine, String input, int from) {
+		int last = input.length() - machine.minLength;
+		if (from > last) {
+			return -1;
+		}
+		if (!machine.literalPrefix.isEmpty()) {
+			int at = input.indexOf(machine.literalPrefix, from);
+			return at >= 0 && at <= last ? at : -1;
+		}
+		int j = from;
+		while (j <= last && !machine.firstChars.contains(input.charAt(j))) {
+			j++;
+		}
+		return j <= last ? j : -1;
 	}
 
 	// replaces every match with the given literal text

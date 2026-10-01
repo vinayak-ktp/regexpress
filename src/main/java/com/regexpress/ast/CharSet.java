@@ -112,6 +112,16 @@ public class CharSet {
 		return negated != inRange;
 	}
 
+	// true when this set holds exactly one character
+	boolean isSingleton() {
+		return !negated && rangeList.size() == 1 && rangeList.get(0).from() == rangeList.get(0).to();
+	}
+
+	// the only character in this set; only meaningful when isSingleton()
+	char singleChar() {
+		return rangeList.get(0).from();
+	}
+
 	@Override
 	public String toString() {
 		StringBuilder sb = new StringBuilder();
