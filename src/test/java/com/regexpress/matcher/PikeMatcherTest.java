@@ -36,6 +36,13 @@ public class PikeMatcherTest {
 		// check non-capturing groups are not reported
 		check("a non-capturing group leaves no slot", "0..2 [1, 2]", describe(find("(?:a)(b)", "ab")));
 
+		// check the prefilter skips positions without changing results
+		check("a literal prefix jumps past non-starters", "6..9 [8, 9]", describe(find("ca(t|r)", "xxcaxxcat")));
+		check("a first-character scan jumps past non-starters", "2..4 []", describe(find("[0-9]x", "ab3x")));
+		check("a nullable pattern still finds empty matches", "0..0 []", describe(find("a*", "bbb")));
+		check("a minimum length gives no match on short input", "null", describe(find("a{3}", "aa")));
+		check("a prefix search resumes from a position", "6..9 [8, 9]", describe(find("ca(t|r)", "catcarcat", 4)));
+
 		// check group captures
 		check("a repeating group reports its last iteration", "0..2 [1, 2]", describe(find("(a|b)+", "ab")));
 		check("an optional group that never runs stays -1", "0..1 [-1, -1]", describe(find("(a)?b", "b")));
@@ -77,11 +84,7 @@ public class PikeMatcherTest {
 		check("a repeated group matches a very large input", "0..20000 [19998, 20000]",
 			describe(find("(ab)*", "ab".repeat(10000))));
 
-		// check agreement with java.util.regex across every pattern and input combination,
-		// for the syntax this engine currently supports (literals, concatenation, alternation,
-		// star, plus, optional, character classes, the any character, bounded repetition,
-		// escapes, anchors, capture groups, lazy and non-capturing groups) — every
-		// occurrence, with bounds and groups, plus replace-all and split
+		// check agreement with java.util.regex across every pattern and input combination, for the supported syntax
 		String[] patterns = {
 			"a|ab", "ab|a", "a|bb", "a*", "a+", "a?", "b+", "ab*", "a*b", "a{2,3}",
 			"(a|b)*", "a|b", "^a", "a$", "^a$", "^", "$", "x", "a{2,}",
