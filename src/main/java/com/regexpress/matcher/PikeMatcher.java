@@ -92,6 +92,11 @@ public final class PikeMatcher {
 				match = new Match(current.winner().start(), i, current.winner().slots());
 			}
 
+			// nothing left in flight: the match can neither grow nor be replaced
+			if (match != null && current.list().isEmpty()) {
+				break;
+			}
+
 			if (i == length) break;
 
 			current = step(current, input.charAt(i), i + 1, length);

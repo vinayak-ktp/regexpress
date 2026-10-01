@@ -32,8 +32,7 @@ public final class Match {
 		return group(0);
 	}
 
-	// group 0 is the whole match, group i the i-th capturing parenthesis from the left;
-	// null when that group did not take part in the match
+	// group 0 is the whole match, group i the i-th capturing parenthesis; null when it did not take part
 	public String group(int index) {
 		if (index == 0) {
 			return input.substring(start, end);
