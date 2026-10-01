@@ -128,10 +128,7 @@ public class NfaMatcherTest {
 		check("stacked bounds match the combined count", true, matches("a{2}{2}", "aaaa"));
 		check("stacked bounds reject the uncombined count", false, matches("a{2}{2}", "aa"));
 
-		// check agreement with java.util.regex across every pattern and input combination,
-		// for the syntax this engine currently supports (literals, concatenation, alternation, star,
-		// plus, optional, character classes, the any character, bounded repetition, escapes,
-		// shorthand classes and anchors)
+		// check agreement with java.util.regex across every pattern and input combination, for the supported syntax
 		String[] patterns = { "a", "ab", "a|b", "a*", "ab*", "(a|b)*", "a(b|c)*", "(ab)*c",
 				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
 				"\\d", "\\D", "\\w", "\\W", "a\\*b", "a\\.b", "[\\da-f]", "[^\\d]",
