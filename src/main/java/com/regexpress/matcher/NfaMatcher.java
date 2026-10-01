@@ -15,6 +15,9 @@ public final class NfaMatcher {
 
 	public static boolean matches(Nfa machine, String input) {
 		int length = input.length();
+		if (length < machine.minLength) {
+			return false;
+		}
 		Set<State> current = epsilonClosure(Set.of(machine.start), 0, length);
 
 		for (int i = 0; i < length; i++) {
@@ -41,8 +44,7 @@ public final class NfaMatcher {
 		return states.stream().anyMatch(State::accepting);
 	}
 
-	// all states that can be reached freely (via epsilon) from a set of states,
-	// except assertion states whose condition fails at the given position
+	// all states reachable via epsilon from these states, except assertion states that fail here
 	private static Set<State> epsilonClosure(Set<State> states, int position, int length) {
 		Set<State> visited = new HashSet<>();
 		Deque<State> toVisit = new ArrayDeque<>(states);

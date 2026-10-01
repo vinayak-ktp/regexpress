@@ -3,6 +3,7 @@ package com.regexpress.nfa;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.regexpress.ast.AstAnalysis;
 import com.regexpress.ast.nodes.AlternateNode;
 import com.regexpress.ast.CharSet;
 import com.regexpress.ast.nodes.CharSetNode;
@@ -27,7 +28,8 @@ public final class NfaBuilder {
 		NfaBuilder builder = new NfaBuilder();
 		Fragment machine = builder.buildFragment(ast);
 		machine.exit.accepting = true;
-		return new Nfa(machine.entrance, builder.allStates, builder.groupCount);
+		return new Nfa(machine.entrance, builder.allStates, builder.groupCount,
+				AstAnalysis.firstChars(ast), AstAnalysis.literalPrefix(ast), AstAnalysis.minLength(ast));
 	}
 
 	private State newState() {
