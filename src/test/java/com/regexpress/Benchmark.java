@@ -6,7 +6,7 @@ import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
 import com.regexpress.parser.Parser;
 
-// hand-rolled benchmark: warm-up, blackhole, best of N rounds; prints timings, always exits 0
+// hand-rolled benchmark: warm-up, best of N rounds; prints timings, always exits 0
 public class Benchmark {
 
 	private static final int WARMUP = 2;
@@ -17,32 +17,31 @@ public class Benchmark {
 		// this family matches empty at every position, so no prefilter can skip it: measure it on less input
 		String dense = text(20_000);
 
-		bench("literal prefix  hello[0-9]+", "hello[0-9]+", text);
-		bench("first char set  [aeiou]+", "[aeiou]+", text);
-		bench("alternation      cat|dog|bird", "cat|dog|bird", text);
-		bench("ambiguity       (a|b)*(a|c)*", "(a|b)*(a|c)*", dense);
-		bench("anchored        ^abc$", "^abc$", text);
+		System.out.printf("%-16s %-18s %9s %9s %9s%n", "family", "pattern", "best ms", "ns/char", "matches");
+		bench("literal prefix", "hello[0-9]+", text);
+		bench("first char set", "[aeiou]+", text);
+		bench("alternation", "cat|dog|bird", text);
+		bench("ambiguity", "(a|b)*(a|c)*", dense);
+		bench("anchored", "^abc$", text);
 	}
 
-	private static void bench(String label, String pattern, String input) {
-		System.out.println("running " + label);
-		System.out.flush();
+	private static void bench(String family, String pattern, String input) {
 		Nfa machine = NfaBuilder.build(Parser.parse(pattern));
 
-		long blackhole = 0;
+		int matches = 0;
 		for (int i = 0; i < WARMUP; i++) {
-			blackhole += findAll(machine, input);
+			matches = findAll(machine, input);
 		}
 
 		long best = Long.MAX_VALUE;
 		for (int round = 0; round < ROUNDS; round++) {
 			long t0 = System.nanoTime();
-			blackhole += findAll(machine, input);
+			matches = findAll(machine, input);
 			best = Math.min(best, System.nanoTime() - t0);
 		}
 
-		System.out.printf("%-32s %,12d ns   %,8.2f ns/char   checksum %d%n",
-			label, best, best / (double) input.length(), blackhole % 1000);
+		System.out.printf("%-16s %-18s %9.2f %9.1f %,9d%n",
+			family, pattern, best / 1_000_000.0, best / (double) input.length(), matches);
 	}
 
 	// counts every occurrence, the way the facade's find-all loop does
