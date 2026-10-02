@@ -47,6 +47,11 @@ public final class State {
 		return epsilon;
 	}
 
+	// this state's position in the machine's state list
+	public int id() {
+		return id;
+	}
+
 	public boolean accepting() {
 		return accepting;
 	}

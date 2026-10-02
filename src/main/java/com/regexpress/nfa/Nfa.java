@@ -23,4 +23,14 @@ public final class Nfa {
 		this.minLength = minLength;
 		this.nullable = minLength == 0;
 	}
+
+	// the number of states in the machine
+	public int stateCount() {
+		return allStates.size();
+	}
+
+	// the state at the given position in the machine's state list
+	public State state(int id) {
+		return allStates.get(id);
+	}
 }

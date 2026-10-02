@@ -8,6 +8,9 @@ public final class MatcherFactory {
 	private MatcherFactory() { }
 
 	public static Matcher forMachine(Nfa machine) {
+		if (machine.stateCount() <= 64) {
+			return new BitDfaMatcher(machine);
+		}
 		return new LazyDfaMatcher(machine);
 	}
 }
