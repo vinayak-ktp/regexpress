@@ -9,9 +9,18 @@ import com.regexpress.nfa.Assertion;
 import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.State;
 
-public final class NfaMatcher {
+public final class NfaMatcher implements Matcher {
 
-	private NfaMatcher() { }
+	private final Nfa machine;
+
+	NfaMatcher(Nfa machine) {
+		this.machine = machine;
+	}
+
+	@Override
+	public boolean matches(String input) {
+		return matches(machine, input);
+	}
 
 	public static boolean matches(Nfa machine, String input) {
 		int length = input.length();

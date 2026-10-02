@@ -3,7 +3,8 @@ package com.regexpress;
 import java.util.List;
 
 import com.regexpress.ast.nodes.Node;
-import com.regexpress.matcher.NfaMatcher;
+import com.regexpress.matcher.Matcher;
+import com.regexpress.matcher.MatcherFactory;
 import com.regexpress.matcher.PikeMatcher;
 import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
@@ -12,9 +13,11 @@ import com.regexpress.parser.Parser;
 public class Regex {
 
 	private final Nfa machine;
+	private final Matcher matcher;
 
 	private Regex(Nfa machine) {
 		this.machine = machine;
+		this.matcher = MatcherFactory.forMachine(machine);
 	}
 
 	public static Regex compile(String pattern) {
@@ -24,7 +27,7 @@ public class Regex {
 	}
 
 	public boolean matches(String input) {
-		return NfaMatcher.matches(machine, input);
+		return matcher.matches(input);
 	}
 
 	// for one-off use only!!!
