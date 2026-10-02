@@ -38,6 +38,11 @@ public final class State {
 		return assertion;
 	}
 
+	// wire a free arrow to the target state
+	void addEpsilon(State target) {
+		epsilon.add(target);
+	}
+
 	public List<State> epsilon() {
 		return epsilon;
 	}

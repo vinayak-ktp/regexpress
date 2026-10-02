@@ -8,4 +8,9 @@ final class Fragment {
 		this.entrance = entrance;
 		this.exit = exit;
 	}
+
+	// wire this fragment's exit to the next fragment's entrance
+	void connectTo(Fragment next) {
+		exit.addEpsilon(next.entrance);
+	}
 }
