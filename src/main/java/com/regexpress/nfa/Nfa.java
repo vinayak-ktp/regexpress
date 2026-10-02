@@ -23,4 +23,12 @@ public final class Nfa {
 		this.minLength = minLength;
 		this.nullable = minLength == 0;
 	}
+
+	public int stateCount() {
+		return allStates.size();
+	}
+
+	public State state(int id) {
+		return allStates.get(id);
+	}
 }
