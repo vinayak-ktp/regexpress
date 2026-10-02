@@ -38,6 +38,10 @@ public final class State {
 		return assertion;
 	}
 
+	void addEpsilon(State target) {
+		epsilon.add(target);
+	}
+
 	public List<State> epsilon() {
 		return epsilon;
 	}

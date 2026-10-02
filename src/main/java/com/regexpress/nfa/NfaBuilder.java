@@ -66,14 +66,14 @@ public final class NfaBuilder {
 		State in = newState();
 		State out = newState();
 		in.assertion = kind;
-		in.epsilon.add(out);
+		in.addEpsilon(out);
 		return new Fragment(in, out);
 	}
 
 	private Fragment buildEmpty() {
 		State in = newState();
 		State out = newState();
-		in.epsilon.add(out);
+		in.addEpsilon(out);
 		return new Fragment(in, out);
 	}
 
@@ -86,14 +86,14 @@ public final class NfaBuilder {
 		in.saveSlot = 2 * index;
 		out.saveSlot = 2 * index + 1;
 
-		in.epsilon.add(child.entrance);
-		child.exit.epsilon.add(out);
+		in.addEpsilon(child.entrance);
+		child.exit.addEpsilon(out);
 
 		return new Fragment(in, out);
 	}
 
 	private Fragment buildConcat(Fragment left, Fragment right) {
-		left.exit.epsilon.add(right.entrance);
+		left.connectTo(right);
 		return new Fragment(left.entrance, right.exit);
 	}
 
@@ -101,11 +101,11 @@ public final class NfaBuilder {
 		State in = newState();
 		State out = newState();
 
-		in.epsilon.add(left.entrance);
-		in.epsilon.add(right.entrance);
+		in.addEpsilon(left.entrance);
+		in.addEpsilon(right.entrance);
 
-		left.exit.epsilon.add(out);
-		right.exit.epsilon.add(out);
+		left.exit.addEpsilon(out);
+		right.exit.addEpsilon(out);
 
 		return new Fragment(in, out);
 	}
@@ -115,15 +115,15 @@ public final class NfaBuilder {
 		State out = newState();
 
 		if (lazy) {
-			in.epsilon.add(out);
-			in.epsilon.add(child.entrance);
-			child.exit.epsilon.add(out);
-			child.exit.epsilon.add(in);
+			in.addEpsilon(out);
+			in.addEpsilon(child.entrance);
+			child.exit.addEpsilon(out);
+			child.exit.addEpsilon(in);
 		} else {
-			in.epsilon.add(child.entrance);
-			child.exit.epsilon.add(in);
-			child.exit.epsilon.add(out);
-			in.epsilon.add(out);
+			in.addEpsilon(child.entrance);
+			child.exit.addEpsilon(in);
+			child.exit.addEpsilon(out);
+			in.addEpsilon(out);
 		}
 
 		return new Fragment(in, out);
@@ -133,13 +133,13 @@ public final class NfaBuilder {
 		State in = newState();
 		State out = newState();
 
-		in.epsilon.add(child.entrance);
+		in.addEpsilon(child.entrance);
 		if (lazy) {
-			child.exit.epsilon.add(out);
-			child.exit.epsilon.add(child.entrance);
+			child.exit.addEpsilon(out);
+			child.exit.addEpsilon(child.entrance);
 		} else {
-			child.exit.epsilon.add(child.entrance);
-			child.exit.epsilon.add(out);
+			child.exit.addEpsilon(child.entrance);
+			child.exit.addEpsilon(out);
 		}
 
 		return new Fragment(in, out);
@@ -150,13 +150,13 @@ public final class NfaBuilder {
 		State out = newState();
 
 		if (lazy) {
-			in.epsilon.add(out);
-			in.epsilon.add(child.entrance);
+			in.addEpsilon(out);
+			in.addEpsilon(child.entrance);
 		} else {
-			in.epsilon.add(child.entrance);
-			in.epsilon.add(out);
+			in.addEpsilon(child.entrance);
+			in.addEpsilon(out);
 		}
-		child.exit.epsilon.add(out);
+		child.exit.addEpsilon(out);
 
 		return new Fragment(in, out);
 	}
