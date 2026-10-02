@@ -23,6 +23,7 @@ public class Benchmark {
 		bench("alternation", "cat|dog|bird", text);
 		bench("ambiguity", "(a|b)*(a|c)*", dense);
 		bench("anchored", "^abc$", text);
+		benchFullMatch("full match", "(a|b|c)*", abcText(20_000));
 	}
 
 	private static void bench(String family, String pattern, String input) {
@@ -44,6 +45,26 @@ public class Benchmark {
 			family, pattern, best / 1_000_000.0, best / (double) input.length(), matches);
 	}
 
+	// measures the yes/no question on a full walk over a small alphabet, via the facade
+	private static void benchFullMatch(String family, String pattern, String input) {
+		Regex regex = Regex.compile(pattern);
+
+		boolean result = false;
+		for (int i = 0; i < WARMUP; i++) {
+			result = regex.matches(input);
+		}
+
+		long best = Long.MAX_VALUE;
+		for (int round = 0; round < ROUNDS; round++) {
+			long t0 = System.nanoTime();
+			result = regex.matches(input);
+			best = Math.min(best, System.nanoTime() - t0);
+		}
+
+		System.out.printf("%-16s %-18s %9.2f %9.1f %9s%n",
+			family, pattern, best / 1_000_000.0, best / (double) input.length(), result ? "yes" : "no");
+	}
+
 	// counts every occurrence, the way the facade's find-all loop does
 	private static int findAll(Nfa machine, String input) {
 		int found = 0;
@@ -57,6 +78,17 @@ public class Benchmark {
 			from = match.end() == match.start() ? match.end() + 1 : match.end();
 		}
 		return found;
+	}
+
+	// deterministic pseudo-random text over a small alphabet that always full-matches
+	private static String abcText(int size) {
+		StringBuilder sb = new StringBuilder(size);
+		long seed = 7;
+		for (int i = 0; i < size; i++) {
+			seed = seed * 6364136223846793005L + 1442695040888963407L;
+			sb.append("abc".charAt((int) ((seed >>> 33) % 3)));
+		}
+		return sb.toString();
 	}
 
 	// deterministic pseudo-random lowercase text with a few planted matches

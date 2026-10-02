@@ -8,6 +8,6 @@ public final class MatcherFactory {
 	private MatcherFactory() { }
 
 	public static Matcher forMachine(Nfa machine) {
-		return new NfaMatcher(machine);
+		return new LazyDfaMatcher(machine);
 	}
 }
