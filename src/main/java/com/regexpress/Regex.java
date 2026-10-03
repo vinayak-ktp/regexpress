@@ -2,6 +2,7 @@ package com.regexpress;
 
 import java.util.List;
 
+import com.regexpress.ast.AstOptimiser;
 import com.regexpress.ast.nodes.Node;
 import com.regexpress.matcher.Matcher;
 import com.regexpress.matcher.MatcherFactory;
@@ -21,7 +22,7 @@ public class Regex {
 	}
 
 	public static Regex compile(String pattern) {
-		Node ast = Parser.parse(pattern);
+		Node ast = AstOptimiser.optimise(Parser.parse(pattern));
 		Nfa machine = NfaBuilder.build(ast);
 		return new Regex(machine);
 	}
