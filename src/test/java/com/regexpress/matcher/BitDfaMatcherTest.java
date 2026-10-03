@@ -10,7 +10,7 @@ import com.regexpress.nfa.Nfa;
 import com.regexpress.nfa.NfaBuilder;
 import com.regexpress.parser.Parser;
 
-public class LazyDfaMatcherTest {
+public class BitDfaMatcherTest {
 	public static void main(String[] args) {
 
 		// check a cached matcher answers the same as a fresh one
@@ -38,6 +38,18 @@ public class LazyDfaMatcherTest {
 		check("two loops full-match ordered input", true, matcher("(a|b)*(a|c)*").matches("aabcc"));
 		check("two loops reject shuffled input", false, matcher("(a|b)*(a|c)*").matches("acb"));
 
+		// check the factory routes by machine size
+		check("a small machine uses the bit-parallel matcher", "BitDfaMatcher",
+			matcher("ab*").getClass().getSimpleName());
+		check("a large machine falls back to the set matcher", "LazyDfaMatcher",
+			matcher("a".repeat(33)).getClass().getSimpleName());
+
+		// check long literals through the bit path, close to the 64-state limit
+		check("a long literal still matches through the bit path", true,
+			matcher("a".repeat(20)).matches("a".repeat(20)));
+		check("a long literal still rejects a shorter input", false,
+			matcher("a".repeat(20)).matches("a".repeat(19)));
+
 		// check agreement with java.util.regex across every pattern and input combination, for the supported syntax
 		String[] patterns = { "a", "ab", "a|b", "a*", "ab*", "(a|b)*", "a(b|c)*", "(ab)*c",
 				"a+", "a?b", "[abc]", "[a-c]", "[^ab]", ".", "a.c", "a{3}", "a{2,4}", "a{2,}", "a{0,1}b", "(ab){2}",
@@ -62,6 +74,6 @@ public class LazyDfaMatcherTest {
 	private static Matcher matcher(String pattern) {
 		Node ast = Parser.parse(pattern);
 		Nfa machine = NfaBuilder.build(ast);
-		return new LazyDfaMatcher(machine);
+		return MatcherFactory.forMachine(machine);
 	}
 }
