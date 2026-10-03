@@ -1,9 +1,10 @@
 # regexpress
 
 A regular expression engine built from scratch in Java, with no external
-dependencies — tokenizer, parser, AST, Thompson-construction NFA builder, and
-two matchers (a plain boolean matcher and a Pike VM for search + captures),
-all hand-rolled, all hand-tested.
+dependencies — tokenizer, parser, AST, tree optimizer, Thompson-construction
+NFA builder, and a family of matchers (two lazy-DFA engines that answer the
+yes/no question, a Pike VM for search and captures, and a plain set-based
+reference implementation), all hand-rolled, all hand-tested.
 
 This is a learning project: the point was to build every layer myself, understand
 why each design decision was made, and verify behavior against `java.util.regex`
@@ -31,17 +32,23 @@ its own `main` and reports its own pass/fail count via a hand-rolled harness
 (`TestSupport`). Run the ones relevant to what you changed:
 
 ```bash
+./run.sh ast.AstAnalysisTest
+./run.sh ast.AstOptimiserTest
 ./run.sh ast.nodes.AstTest
 ./run.sh ast.CharSetTest
 ./run.sh tokenizer.TokenizerTest
 ./run.sh parser.ParserTest
 ./run.sh nfa.NfaTest
 ./run.sh matcher.NfaMatcherTest
+./run.sh matcher.LazyDfaMatcherTest
+./run.sh matcher.BitDfaMatcherTest
 ./run.sh matcher.PikeMatcherTest
 ./run.sh RegexTest
 ```
 
-All eight suites currently pass, 3,749 checks in total.
+All twelve suites currently pass, 5,473 checks in total. There is also a
+benchmark harness (`./run.sh Benchmark`) — not a test, it prints per-family
+timings for the matchers.
 
 ## Usage
 
@@ -76,7 +83,9 @@ com.regexpress                  Regex, Match — the only public API most caller
 │   │                           Alternate, Star/Plus/Optional (each greedy-or-lazy),
 │   │                           CharSet, Group, StartAnchor, EndAnchor, Empty
 │   ├── CharSet.java             ranges, negation, union, shorthand classes
-│   └── AstPrinter.java          canonical flat/tree rendering of a Node
+│   ├── AstPrinter.java          canonical flat/tree rendering of a Node
+│   ├── AstAnalysis.java         static facts a matcher uses to skip impossible starts
+│   └── AstOptimiser.java        rewrites that shrink the tree without changing what it matches
 ├── tokenizer                   turns pattern text into a token stream
 │   ├── tokens                   Token (sealed): Literal, Operator, ClassShorthand, End
 │   ├── Tokenizer.java            the escape state machine
@@ -91,9 +100,17 @@ com.regexpress                  Regex, Match — the only public API most caller
 │   ├── Nfa.java / Fragment.java  a built machine / a sub-machine under construction
 │   └── NfaPrinter.java           debug rendering of a machine's states and arrows
 └── matcher                     running a machine against input
-    ├── NfaMatcher.java           plain yes/no matching: epsilon-closure over a
-    │                             Set<State> — fast, but reports no position and
-    │                             no captures
+    ├── Matcher.java             the yes/no question as an interface
+    ├── MatcherFactory.java      picks the engine by machine size
+    ├── BitDfaMatcher.java       yes/no for machines of at most 64 states: the
+    │                             state set is one long, closures are precomputed
+    │                             per anchor context, a cached transition is one
+    │                             array read
+    ├── LazyDfaMatcher.java      yes/no for larger machines: state sets become
+    │                             on-demand DFA states with cached per-character
+    │                             successors
+    ├── NfaMatcher.java          plain set-based simulation — the reference
+    │                             implementation the others are checked against
     ├── PikeMatcher.java          search, leftmost-first priority, and capture
     │                             groups: an ordered thread list instead of a set,
     │                             each thread carrying its start position and a
@@ -112,7 +129,7 @@ preemptively.
 A pattern travels through the pipeline in this order:
 
 ```
-pattern text -> Tokenizer -> Parser -> AST (Node) -> NfaBuilder -> Nfa -> Matcher -> Match
+pattern text -> Tokenizer -> Parser -> AST (Node) -> AstOptimiser -> NfaBuilder -> Nfa -> Matcher -> Match
 ```
 
 Each stage below takes the previous stage's output type and produces the next.
@@ -153,13 +170,15 @@ recognizes them contextually, later, only inside `{...}` and `[...]`.
 `ConcatNode`, `AlternateNode`, `StarNode`/`PlusNode`/`OptionalNode` (each
 carrying a `lazy` flag), `CharSetNode`, `GroupNode`, `StartAnchorNode`,
 `EndAnchorNode`, `EmptyNode`. Because it's `sealed`, every `switch` over a
-`Node` in the rest of the codebase (in `NfaBuilder`, `AstPrinter`) is
+`Node` in the rest of the codebase (in `NfaBuilder`, `AstPrinter`,
+`AstAnalysis`, `AstOptimiser`) is
 exhaustive — the compiler refuses to build if a new `Node` variant is ever
 added without teaching every consumer how to handle it.
 
 The tree carries no behavior of its own; every operation over it
-(`AstPrinter.tree()`/`flat()`, `NfaBuilder.buildFragment()`) lives as an
-exhaustive `switch` in a separate class. `toString()` on each record is the
+(`AstPrinter.tree()`/`flat()`, `NfaBuilder.buildFragment()`, `AstAnalysis`,
+`AstOptimiser`) lives as an exhaustive `switch` in a separate class. `toString()`
+on each record is the
 one canonical rendering of that node, reused everywhere a human-readable form
 is needed (debug prints, error context).
 
@@ -221,6 +240,25 @@ A few grammar decisions worth knowing:
   reads an `Operator`'s symbol as an ordinary character — inside `[...]`, an
   unescaped operator character is just another class member.
 
+### Tree optimizer — `AstOptimiser`
+
+Between parsing and building, `Regex.compile` runs one bottom-up rewrite
+pass that shrinks the tree without changing what it matches:
+
+- Stacked quantifiers collapse when *both* are greedy: `a**`, `a*+`, `a+*`,
+  `a?*` all become `a*`, and `(?:a?)?` becomes `a?`. Lazy quantifiers are
+  never fused — `a+?` prefers a different span than any `a*` — and a
+  capturing group blocks fusion because it captures per iteration.
+- A quantifier over empty collapses to empty, and a concatenation with an
+  empty side drops that side.
+- Equal alternation branches collapse (`a|a` → `a`), and two bare
+  character-set branches merge into one class (`a|b|c` → `[abc]`), chains
+  collapsing bottom-up.
+
+`NfaBuilder.build` itself stays a pure function of its input tree, so
+callers that build machines directly (the structural tests, the
+unoptimized differential checks) get the unmodified construction.
+
 ### NFA construction — `NfaBuilder`, `State`, `Fragment`
 
 `NfaBuilder.build(Node)` walks the AST exactly once, bottom-up, turning each
@@ -247,8 +285,10 @@ A `State` is a plain, mutable, package-private bag of fields:
 
 One `build*` method per `Node` variant. The interesting ones:
 
-- **Concatenation** is just `left.exit.epsilon.add(right.entrance)` — one
-  arrow, no new states.
+- **Concatenation** is just `left.connectTo(right)` — one arrow, no new
+  states. States and fragments expose small wiring methods (`addEpsilon`,
+  `connectTo`) so no builder ever reaches into another object's epsilon
+  list directly.
 - **Alternation** adds a new `in`/`out` state pair, epsilon-branches from
   `in` into both children's entrances, and epsilon-merges both children's
   exits into `out`.
@@ -264,6 +304,14 @@ One `build*` method per `Node` variant. The interesting ones:
   fields mark "record the position on the way in" and "record the position on
   the way out" — the group's captured text is just the substring between
   those two recorded positions.
+
+Besides the machine itself, `NfaBuilder.build()` computes four facts from
+the tree (via `AstAnalysis`) and attaches them to the finished `Nfa`:
+`firstChars` (the characters a non-empty match can begin with),
+`literalPrefix` (the longest literal string every match must begin with),
+`minLength` (the fewest characters any match spans), and `nullable` (whether
+the empty string matches). The search matcher uses these to skip positions
+no match can start at — see the prefilters note under Matching below.
 
 `NfaPrinter.print(Nfa)` renders every state's id, its arrow (labelled or
 epsilon), any assertion guard, and whether it's accepting — useful for
@@ -284,26 +332,45 @@ the direct route to the accepting state 3 — exactly the "try to keep going
 first" preference described above. A lazy `a*?` would print the same four
 states with that order reversed.)
 
-### Matching — `NfaMatcher` and `PikeMatcher`
+### Matching — the `Matcher` interface and the engines behind it
 
-Both matchers work by tracking, at each input position, which states could
+All matchers work by tracking, at each input position, which states could
 currently be "active," and updating that collection one character at a time.
-Both start by taking the **epsilon-closure** of the start state: follow every
+All start by taking the **epsilon-closure** of the start state: follow every
 free arrow (skipping any assertion state whose condition doesn't hold at the
 current position) until only states with a labelled arrow, or the accepting
 state, remain live.
 
-**`NfaMatcher.matches(Nfa, String)`** answers only "does the pattern match the
-*entire* input?" It keeps a plain `Set<State>` — order doesn't matter, and two
-different paths that reach the same state at the same position are provably
-interchangeable from then on, so the set just merges them. This makes it the
-fastest of the two matchers, but a set has no way to say *where* a match
-started or *what* a group captured — it can only report yes or no.
+The yes/no question — "does this pattern match the *entire* input?" — goes
+through the `Matcher` interface, and `MatcherFactory.forMachine(Nfa)` picks
+the engine by machine size, so `Regex` never names a concrete matcher. Two
+engines implement it, both lazy DFAs in the same sense: the first time a
+state set is seen, its successors are computed the slow way and *cached*,
+so the second time the same set is reached, a character costs one table
+lookup instead of a fresh closure walk.
 
-**`PikeMatcher`** answers the harder questions: where does a match start and
-end (`find`), and what did each group capture. It replaces the set with an
-ordered `List` of **threads** (here called `Candidate`s), each one a
-`(state, start position, capture-slot array)` triple:
+- **`BitDfaMatcher`** serves machines with at most 64 states — which is most
+  patterns, since a literal character costs two states. The state set is
+  packed into one `long` (bit *i* = state *i*), each state's closure is
+  precomputed once per anchor context, and cached transitions live in a
+  per-state array indexed by ASCII character — one array read per input
+  character. Anchor handling is exact: the start closure allows `^`, cached
+  steps assume a mid-input position, and the final character is computed
+  uncached so `$` can hold there.
+- **`LazyDfaMatcher`** serves larger machines with the same design over
+  `Set<State>` keys and a `ConcurrentHashMap` per state set.
+- **`NfaMatcher`** is the plain set-based simulation with no caching —
+  order doesn't matter, and two different paths that reach the same state
+  at the same position are provably interchangeable from then on, so the
+  set just merges them. It is kept as the reference implementation the DFA
+  engines are checked against.
+
+**`PikeMatcher`** answers the harder questions — where a match starts and
+ends (`find`), and what each group captured — where caching state sets is
+not enough, because *which* path reached a state determines the answer. It
+replaces the set with an ordered `List` of **threads** (here called
+`Candidate`s), each one a `(state, start position, capture-slot array)`
+triple:
 
 - **`start`** is what makes unanchored search possible: at every input
   position where no match has been confirmed yet, a fresh thread is injected
@@ -328,6 +395,19 @@ ordered `List` of **threads** (here called `Candidate`s), each one a
   higher-priority thread at a given state is ever kept, and it carries the
   slots that should win.
 
+`find` also refuses to do unnecessary work, in two ways:
+
+- **Prefilters.** While no match has been confirmed and no thread is in
+  flight, the search jumps directly to the next position a match could
+  start at: `String.indexOf` for the literal prefix, else a scan for a
+  first character in `firstChars`, bounded by `length - minLength`.
+  Patterns that can match empty skip nothing (every position is a
+  candidate), and threads in flight are never jumped over.
+- **Early exit.** Once a match exists and the thread list is empty, the
+  match can neither grow (growing needs a live thread) nor be replaced
+  (replacement needs a live higher-priority thread), so the scan stops
+  instead of stepping empty lists to the end of the input.
+
 `PikeMatcher.find(Nfa, String, int from)` is the primitive everything else is
 built on: `replaceAll` and `split` are ordinary loops that call `find`
 repeatedly, each time resuming after the previous match's end — with one
@@ -337,9 +417,11 @@ one extra character, or the loop never terminates.
 ### Facade — `Regex` and `Match`
 
 `Regex.compile(String)` runs the whole pipeline once (tokenize → parse →
-build) and returns an object holding only the finished `Nfa` — nothing about
-tokens, the AST, or NFA states is exposed. `matches`/`find`/`replaceAll`/`split`
-all delegate to the two matcher classes.
+optimize → build) and returns an object holding only the finished `Nfa` and
+a `Matcher` chosen by the factory — nothing about
+tokens, the AST, or NFA states is exposed. `matches` goes through that
+matcher; `find`/`replaceAll`/`split` delegate to `PikeMatcher`, the only
+engine that can report positions and captures.
 
 The public `Match` (`com.regexpress.Match`, distinct from the
 matcher-internal `com.regexpress.matcher.Match`) is where the raw capture-slot
@@ -388,11 +470,16 @@ including on adversarial ReDoS-style patterns and stacked quantifiers.
 
 ## Project status
 
-Implemented and tested: syntax tree, tokenizer, parser, NFA construction,
-plain matching, anchors, character classes and shorthands, unanchored search,
-leftmost-first priority, greedy/lazy quantifiers, capture groups and
-non-capturing groups, `replaceAll`, `split`, and the public `Regex`/`Match`
-API.
+Implemented and tested: syntax tree, tokenizer, parser, tree optimizer,
+NFA construction, plain matching, anchors, character classes and
+shorthands, unanchored search, leftmost-first priority, greedy/lazy
+quantifiers, capture groups and non-capturing groups, `replaceAll`,
+`split`, and the public `Regex`/`Match` API — plus the performance work:
+tree-analysis prefilters and an early exit in search, lazy-DFA and
+bit-parallel yes/no engines behind a `Matcher` interface, and a
+hand-rolled benchmark harness measuring six pattern families.
 
-Not yet started: performance work (lazy DFA, bit-parallel state sets,
-prefilters) and a full low-level design / SOLID audit.
+Deliberately not done, after measurement: a struct-of-arrays memory layout
+(per-character costs are lookup-bound, not memory-bound) and generation
+counters for capture slots (a correct write-chain design measured slower
+than the existing copy-on-write in Java, so the copy stayed).
