@@ -24,6 +24,8 @@ public class Benchmark {
 		bench("ambiguity", "(a|b)*(a|c)*", dense);
 		bench("anchored", "^abc$", text);
 		benchFullMatch("full match", "(a|b|c)*", abcText(20_000));
+		bench("grouped loop", "((a|b|c))*", abcText(20_000));
+		bench("nested groups", "(((((a|b|c)))))*", abcText(20_000));
 	}
 
 	private static void bench(String family, String pattern, String input) {
