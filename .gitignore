@@ -10,13 +10,9 @@ out/
 !.idea/runConfigurations/
 !.idea/copyright/
 !.idea/vcs.xml
-# *.iml   # uncomment when using a build tool
+*.iml
 *.iws
 *.bak
-
-# Remove when using a build tool (Maven/Gradle)
-!.idea/misc.xml
-!.idea/modules.xml
 
 ### Eclipse ###
 .apt_generated
