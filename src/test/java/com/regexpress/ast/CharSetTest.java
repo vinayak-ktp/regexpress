@@ -1,87 +1,312 @@
 package com.regexpress.ast;
 
-import static com.regexpress.TestSupport.check;
-import static com.regexpress.TestSupport.checkThrows;
-import static com.regexpress.TestSupport.report;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class CharSetTest {
-	public static void main(String[] args) {
-		// check empty()
-		check("an empty set contains no character", false, CharSet.empty().contains('a'));
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
 
-		// check all()
-		check("the all set contains an ordinary character", true, CharSet.all().contains('a'));
-		check("the all set contains the null character", true, CharSet.all().contains('\0'));
+class CharSetTest {
 
-		// check of(char)
-		check("a single-character set contains that character", true, CharSet.of('a').contains('a'));
-		check("a single-character set rejects a different character", false, CharSet.of('a').contains('b'));
+	@Test
+	@DisplayName("an empty set contains no character")
+	void emptySetContainsNothing() {
+		assertFalse(CharSet.empty().contains('a'));
+	}
 
-		// check range(from, to)
-		check("a range contains a character inside it", true, CharSet.range('a', 'c').contains('b'));
-		check("a range contains its lower boundary", true, CharSet.range('a', 'c').contains('a'));
-		check("a range contains its upper boundary", true, CharSet.range('a', 'c').contains('c'));
-		check("a range rejects a character outside it", false, CharSet.range('a', 'c').contains('d'));
+	@Nested
+	@DisplayName("all()")
+	class All {
+		@Test
+		@DisplayName("the all set contains an ordinary character")
+		void containsOrdinary() {
+			assertTrue(CharSet.all().contains('a'));
+		}
 
-		// check negate()
-		check("a negated set rejects the character it was built from", false, CharSet.of('a').negate().contains('a'));
-		check("a negated set contains a character it was not built from", true, CharSet.of('a').negate().contains('b'));
+		@Test
+		@DisplayName("the all set contains the null character")
+		void containsNullChar() {
+			assertTrue(CharSet.all().contains('\0'));
+		}
+	}
 
-		CharSet negatedTwice = CharSet.of('a').negate();
-		negatedTwice.negate();
+	@Nested
+	@DisplayName("of(char)")
+	class Of {
+		@Test
+		@DisplayName("a single-character set contains that character")
+		void containsItsChar() {
+			assertTrue(CharSet.of('a').contains('a'));
+		}
 
-		// check deliberate decisions
-		check("negating an already-negated set does not flip it back", false, negatedTwice.contains('a'));
+		@Test
+		@DisplayName("a single-character set rejects a different character")
+		void rejectsOtherChar() {
+			assertFalse(CharSet.of('a').contains('b'));
+		}
+	}
 
-		// check union(other)
-		CharSet unioned = CharSet.of('a');
-		unioned.union(CharSet.of('b'));
-		check("a union contains a character from the first set", true, unioned.contains('a'));
-		check("a union contains a character from the second set", true, unioned.contains('b'));
-		check("a union rejects a character from neither set", false, unioned.contains('c'));
+	@Nested
+	@DisplayName("range(from, to)")
+	class Range {
+		@Test
+		@DisplayName("a range contains a character inside it")
+		void containsInside() {
+			assertTrue(CharSet.range('a', 'c').contains('b'));
+		}
 
-		// check union(other) with a negated operand
-		CharSet setWithItsOwnComplement = CharSet.of('a');
-		setWithItsOwnComplement.union(CharSet.of('a').negate());
-		check("a set unioned with its own negation contains the character it started with", true, setWithItsOwnComplement.contains('a'));
-		check("a set unioned with its own negation also contains every other character", true, setWithItsOwnComplement.contains('z'));
+		@Test
+		@DisplayName("a range contains its lower boundary")
+		void containsLowerBound() {
+			assertTrue(CharSet.range('a', 'c').contains('a'));
+		}
 
-		// check digit()
-		check("digit contains a digit", true, CharSet.digit().contains('5'));
-		check("digit rejects a letter", false, CharSet.digit().contains('a'));
+		@Test
+		@DisplayName("a range contains its upper boundary")
+		void containsUpperBound() {
+			assertTrue(CharSet.range('a', 'c').contains('c'));
+		}
 
-		// check word()
-		check("word contains a letter", true, CharSet.word().contains('Z'));
-		check("word contains a digit", true, CharSet.word().contains('5'));
-		check("word contains an underscore", true, CharSet.word().contains('_'));
-		check("word rejects a space", false, CharSet.word().contains(' '));
+		@Test
+		@DisplayName("a range rejects a character outside it")
+		void rejectsOutside() {
+			assertFalse(CharSet.range('a', 'c').contains('d'));
+		}
+	}
 
-		// check whitespace()
-		check("whitespace contains a space", true, CharSet.whitespace().contains(' '));
-		check("whitespace contains a tab", true, CharSet.whitespace().contains('\t'));
-		check("whitespace contains a newline", true, CharSet.whitespace().contains('\n'));
-		check("whitespace rejects a letter", false, CharSet.whitespace().contains('a'));
+	@Nested
+	@DisplayName("negate()")
+	class Negate {
+		@Test
+		@DisplayName("a negated set rejects the character it was built from")
+		void rejectsOwnChar() {
+			assertFalse(CharSet.of('a').negate().contains('a'));
+		}
 
-		// check fromShorthand(kind)
-		check("fromShorthand('d') agrees with digit()", true, CharSet.fromShorthand('d').contains('5'));
-		check("fromShorthand('D') is the negation of digit()", true, CharSet.fromShorthand('D').contains('a'));
-		check("fromShorthand('D') rejects a digit", false, CharSet.fromShorthand('D').contains('5'));
-		check("fromShorthand('w') agrees with word()", true, CharSet.fromShorthand('w').contains('_'));
-		check("fromShorthand('W') rejects a word character", false, CharSet.fromShorthand('W').contains('_'));
-		check("fromShorthand('s') agrees with whitespace()", true, CharSet.fromShorthand('s').contains(' '));
-		check("fromShorthand('S') rejects whitespace", false, CharSet.fromShorthand('S').contains(' '));
+		@Test
+		@DisplayName("a negated set contains a character it was not built from")
+		void containsOtherChar() {
+			assertTrue(CharSet.of('a').negate().contains('b'));
+		}
 
-		// check rejections
-		checkThrows("fromShorthand rejects a kind that is not one of dDwWsS", IllegalArgumentException.class, () -> CharSet.fromShorthand('x'));
+		@Test
+		@DisplayName("negating an already-negated set does not flip it back")
+		void doubleNegationDoesNotFlipBack() {
+			CharSet negatedTwice = CharSet.of('a').negate();
+			negatedTwice.negate();
+			assertFalse(negatedTwice.contains('a'));
+		}
+	}
 
-		// check equals and toString
-		check("two independently built ranges compare as equal", CharSet.range('a', 'z'), CharSet.range('a', 'z'));
-		check("a set and its negation do not compare as equal", CharSet.of('a'), CharSet.of('a').negate(), false);
-		check("a single character prints bare", "a", CharSet.of('a').toString());
-		check("a range prints in brackets", "[a-z]", CharSet.range('a', 'z').toString());
-		check("a negated range prints with a caret", "[^a-z]", CharSet.range('a', 'z').negate().toString());
-		check("the all set prints as [all]", "[all]", CharSet.all().toString());
+	@Nested
+	@DisplayName("union(other)")
+	class Union {
+		@Test
+		@DisplayName("a union contains a character from the first set")
+		void containsFirstSetChar() {
+			CharSet unioned = CharSet.of('a');
+			unioned.union(CharSet.of('b'));
+			assertTrue(unioned.contains('a'));
+		}
 
-		report();
+		@Test
+		@DisplayName("a union contains a character from the second set")
+		void containsSecondSetChar() {
+			CharSet unioned = CharSet.of('a');
+			unioned.union(CharSet.of('b'));
+			assertTrue(unioned.contains('b'));
+		}
+
+		@Test
+		@DisplayName("a union rejects a character from neither set")
+		void rejectsUnrelatedChar() {
+			CharSet unioned = CharSet.of('a');
+			unioned.union(CharSet.of('b'));
+			assertFalse(unioned.contains('c'));
+		}
+
+		@Test
+		@DisplayName("a set unioned with its own negation contains the character it started with")
+		void unionWithOwnNegationContainsOriginal() {
+			CharSet setWithItsOwnComplement = CharSet.of('a');
+			setWithItsOwnComplement.union(CharSet.of('a').negate());
+			assertTrue(setWithItsOwnComplement.contains('a'));
+		}
+
+		@Test
+		@DisplayName("a set unioned with its own negation also contains every other character")
+		void unionWithOwnNegationContainsEverythingElse() {
+			CharSet setWithItsOwnComplement = CharSet.of('a');
+			setWithItsOwnComplement.union(CharSet.of('a').negate());
+			assertTrue(setWithItsOwnComplement.contains('z'));
+		}
+	}
+
+	@Nested
+	@DisplayName("digit()")
+	class Digit {
+		@Test
+		@DisplayName("digit contains a digit")
+		void containsDigit() {
+			assertTrue(CharSet.digit().contains('5'));
+		}
+
+		@Test
+		@DisplayName("digit rejects a letter")
+		void rejectsLetter() {
+			assertFalse(CharSet.digit().contains('a'));
+		}
+	}
+
+	@Nested
+	@DisplayName("word()")
+	class Word {
+		@Test
+		@DisplayName("word contains a letter")
+		void containsLetter() {
+			assertTrue(CharSet.word().contains('Z'));
+		}
+
+		@Test
+		@DisplayName("word contains a digit")
+		void containsDigit() {
+			assertTrue(CharSet.word().contains('5'));
+		}
+
+		@Test
+		@DisplayName("word contains an underscore")
+		void containsUnderscore() {
+			assertTrue(CharSet.word().contains('_'));
+		}
+
+		@Test
+		@DisplayName("word rejects a space")
+		void rejectsSpace() {
+			assertFalse(CharSet.word().contains(' '));
+		}
+	}
+
+	@Nested
+	@DisplayName("whitespace()")
+	class Whitespace {
+		@Test
+		@DisplayName("whitespace contains a space")
+		void containsSpace() {
+			assertTrue(CharSet.whitespace().contains(' '));
+		}
+
+		@Test
+		@DisplayName("whitespace contains a tab")
+		void containsTab() {
+			assertTrue(CharSet.whitespace().contains('\t'));
+		}
+
+		@Test
+		@DisplayName("whitespace contains a newline")
+		void containsNewline() {
+			assertTrue(CharSet.whitespace().contains('\n'));
+		}
+
+		@Test
+		@DisplayName("whitespace rejects a letter")
+		void rejectsLetter() {
+			assertFalse(CharSet.whitespace().contains('a'));
+		}
+	}
+
+	@Nested
+	@DisplayName("fromShorthand(kind)")
+	class FromShorthand {
+		@Test
+		@DisplayName("fromShorthand('d') agrees with digit()")
+		void dAgreesWithDigit() {
+			assertTrue(CharSet.fromShorthand('d').contains('5'));
+		}
+
+		@Test
+		@DisplayName("fromShorthand('D') is the negation of digit()")
+		void dCapsIsNegationOfDigit() {
+			assertTrue(CharSet.fromShorthand('D').contains('a'));
+		}
+
+		@Test
+		@DisplayName("fromShorthand('D') rejects a digit")
+		void dCapsRejectsDigit() {
+			assertFalse(CharSet.fromShorthand('D').contains('5'));
+		}
+
+		@Test
+		@DisplayName("fromShorthand('w') agrees with word()")
+		void wAgreesWithWord() {
+			assertTrue(CharSet.fromShorthand('w').contains('_'));
+		}
+
+		@Test
+		@DisplayName("fromShorthand('W') rejects a word character")
+		void wCapsRejectsWordChar() {
+			assertFalse(CharSet.fromShorthand('W').contains('_'));
+		}
+
+		@Test
+		@DisplayName("fromShorthand('s') agrees with whitespace()")
+		void sAgreesWithWhitespace() {
+			assertTrue(CharSet.fromShorthand('s').contains(' '));
+		}
+
+		@Test
+		@DisplayName("fromShorthand('S') rejects whitespace")
+		void sCapsRejectsWhitespace() {
+			assertFalse(CharSet.fromShorthand('S').contains(' '));
+		}
+
+		@Test
+		@DisplayName("fromShorthand rejects a kind that is not one of dDwWsS")
+		void rejectsUnknownKind() {
+			assertThrows(IllegalArgumentException.class, () -> CharSet.fromShorthand('x'));
+		}
+	}
+
+	@Nested
+	@DisplayName("equals and toString")
+	class EqualsAndToString {
+		@Test
+		@DisplayName("two independently built ranges compare as equal")
+		void equalRangesCompareEqual() {
+			assertEquals(CharSet.range('a', 'z'), CharSet.range('a', 'z'));
+		}
+
+		@Test
+		@DisplayName("a set and its negation do not compare as equal")
+		void setAndNegationCompareUnequal() {
+			assertNotEquals(CharSet.of('a'), CharSet.of('a').negate());
+		}
+
+		@Test
+		@DisplayName("a single character prints bare")
+		void singleCharPrintsBare() {
+			assertEquals("a", CharSet.of('a').toString());
+		}
+
+		@Test
+		@DisplayName("a range prints in brackets")
+		void rangePrintsInBrackets() {
+			assertEquals("[a-z]", CharSet.range('a', 'z').toString());
+		}
+
+		@Test
+		@DisplayName("a negated range prints with a caret")
+		void negatedRangePrintsWithCaret() {
+			assertEquals("[^a-z]", CharSet.range('a', 'z').negate().toString());
+		}
+
+		@Test
+		@DisplayName("the all set prints as [all]")
+		void allSetPrintsAsAll() {
+			assertEquals("[all]", CharSet.all().toString());
+		}
 	}
 }
