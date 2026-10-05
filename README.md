@@ -1,10 +1,10 @@
 # regexpress
 
 A regular expression engine built from scratch in Java, with no external
-dependencies — tokenizer, parser, AST, tree optimizer, Thompson-construction
-NFA builder, and a family of matchers (two lazy-DFA engines that answer the
-yes/no question, a Pike VM for search and captures, and a plain set-based
-reference implementation), all hand-rolled, all hand-tested.
+dependencies in the engine itself — tokenizer, parser, AST, tree optimizer,
+Thompson-construction NFA builder, and a family of matchers (two lazy-DFA
+engines that answer the yes/no question, a Pike VM for search and captures,
+and a plain set-based reference implementation), all hand-rolled.
 
 This is a learning project: the point was to build every layer myself, understand
 why each design decision was made, and verify behavior against `java.util.regex`
@@ -13,42 +13,44 @@ wherever the two are expected to agree.
 ## Requirements
 
 - Java 21 (see `.java-version`)
-- No build tool, no dependencies. `run.sh` compiles everything with `javac`
-  directly.
+- [Maven](https://maven.apache.org/) 3.6+, for building and running tests.
+  Everything else (JUnit 5, the compiler/surefire/exec plugins) is pulled in
+  by `pom.xml` — nothing else needs installing by hand.
 
 ## Build and run
 
 ```bash
-./run.sh                          # compiles src/main + src/test, runs Main
-./run.sh RegexTest                # runs one test class
-./run.sh matcher.NfaMatcherTest   # a package-relative name also works
+mvn compile               # compile src/main only
+mvn test                  # compile everything and run all JUnit tests
+mvn package                # test, then produce target/regexpress-1.0-SNAPSHOT.jar
+mvn compile exec:java      # run Main
 ```
 
-`run.sh` always wipes `out/production` and recompiles from scratch first, so a
-renamed or deleted class never leaves stale bytecode behind.
-
-There is no JUnit and no single "run everything" target — each test class has
-its own `main` and reports its own pass/fail count via a hand-rolled harness
-(`TestSupport`). Run the ones relevant to what you changed:
+Run a single test class, or a single `@Nested`/`@ParameterizedTest` case, with
+Surefire's `-Dtest` filter:
 
 ```bash
-./run.sh ast.AstAnalysisTest
-./run.sh ast.AstOptimiserTest
-./run.sh ast.nodes.AstTest
-./run.sh ast.CharSetTest
-./run.sh tokenizer.TokenizerTest
-./run.sh parser.ParserTest
-./run.sh nfa.NfaTest
-./run.sh matcher.NfaMatcherTest
-./run.sh matcher.LazyDfaMatcherTest
-./run.sh matcher.BitDfaMatcherTest
-./run.sh matcher.PikeMatcherTest
-./run.sh RegexTest
+mvn test -Dtest=RegexTest
+mvn test -Dtest=NfaMatcherTest
+mvn test "-Dtest=RegexTest#compiledPatternGivesSameAnswerWhenReused"
 ```
 
-All twelve suites currently pass, 5,473 checks in total. There is also a
-benchmark harness (`./run.sh Benchmark`) — not a test, it prints per-family
-timings for the matchers.
+All twelve suites currently pass, 5,473 checks in total — the same count the
+old hand-rolled harness reported, now reported per-case by JUnit instead of as
+one lump sum. There is also a benchmark harness, not a test, run by overriding
+which class the exec plugin launches:
+
+```bash
+mvn test-compile exec:java -Dexec.mainClass=com.regexpress.Benchmark
+```
+
+Each test class keeps the same grouping its old `// check X` comments used,
+now as `@Nested` inner classes (so `mvn test` output — and an IDE's test
+tree — shows the same structure a reader of the old file would recognize).
+Anywhere the old code looped over a hand-written array of cases, that loop
+became a `@ParameterizedTest` fed by a `@MethodSource`, so each generated
+case still reports as its own pass/fail line rather than disappearing inside
+one big loop.
 
 ## Usage
 
@@ -77,6 +79,10 @@ it; see `Main.java` for a worked example.
 ## Package layout
 
 ```
+pom.xml                         Maven build: dependencies, compiler/surefire/exec plugin config
+src/main/java/com.regexpress     the engine and its public facade (below)
+src/test/java/com.regexpress     one JUnit 5 test class per main-code class, plus Benchmark.java
+
 com.regexpress                  Regex, Match — the only public API most callers need
 ├── ast                         the syntax tree and character-set logic
 │   ├── nodes                   Node (sealed) and its record variants: Concat,
